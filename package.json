@@ -12,6 +12,9 @@
     "vite": "^4.4.5"
   },
   "dependencies": {
-    "matter-js": "^0.19.0"
+    "clone": "^2.1.2",
+    "js-combinatorics": "^2.1.2",
+    "matter-js": "^0.19.0",
+    "poly-decomp": "^0.3.0"
   }
 }

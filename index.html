@@ -2,22 +2,46 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="halloween/10_watermelon.png" />
+    <link rel="icon" type="image/png" href="base/10_watermelon.png" />
+    <script src="//cdn.jsdelivr.net/npm/poly-decomp@0.3.0/build/decomp.min.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Suika Game - スイカゲーム</title>
+    <script src="//cdn.jsdelivr.net/npm/pathseg@1.2.1/pathseg.min.js"></script>
 
+    <title>Suika Stay Home - スイカゲーム</title>
     <style>
       body {
         text-align: center;
       }
+
+      canvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
+      #mute {
+        position: fixed;
+        bottom:0px;
+        left:0px;
+        width: 30px;
+        height: 30px;
+        z-index:9;
+        background-image: url('mute.svg');
+        background-repeat: no-repeat;
+        background-size: cover;
+      }
+      #mute[muted] {
+        background-image: url('muted.svg');
+      }
+      .hidden {
+        display: none;
+      }
     </style>
   </head>
   <body>
-    <h1>スイカゲーム</h1>
-    <pre>
-      Use A, S, D to control the fruit.
-      YouTube <a href="https://www.youtube.com/@bbanghyong">빵형의 개발도상국</a>
-    </pre>
     <script type="module" src="/main.js"></script>
+    <div id="mute"></div>
   </body>
 </html>
