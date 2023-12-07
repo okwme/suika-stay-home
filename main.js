@@ -11,6 +11,7 @@ const frameType = "square"
 const soundUrl = "pop.wav";
 const max = 1000
 const thick = 50
+const dropRate = 200
 const maxRadius = pickVariety * radiusStep + radiusOffset
 const bgColor = '#ddd'//randomHexColor()
 const wallColor = 'rgba(0,0,0,0)'//bgColor//'#999'//randomHexColor()
@@ -47,7 +48,7 @@ function init() {
     if (!isPaused) {
       addFruit()
     }
-  }, 200)
+  }, dropRate)
 }
 
 function makeFruit() {
@@ -179,9 +180,11 @@ function makeSquareFrame() {
 
 
 function scramblePics() {
-  const totalPics = 28;
-  const picArray = Array.from({ length: totalPics }, (_, index) => index + 1);
-  pics = picArray.sort(() => Math.random() - 0.5);
+  // const totalPics = 28;
+  // const picArray = Array.from({ length: totalPics }, (_, index) => index + 1);
+  // pics = picArray.sort(() => Math.random() - 0.5);
+  pics = Array.from({ length: 10 }, (_, index) => (index + 1).toString());
+
 }
 
 function drawFruits() {
@@ -195,9 +198,9 @@ function drawFruits() {
       render: {
         // fillStyle: colors[i] // Set the fillStyle to the color
         sprite: {
-          texture: `fin/${pics[i]}.png`,
-          xScale: rad / 400, // Adjust the x-scale of the sprite based on the radius
-          yScale: rad / 400 // Adjust the y-scale of the sprite based on the radius
+          texture: `fin/${pics[i]}-thumb.png`,
+          xScale: 1,//rad / 400, // Adjust the x-scale of the sprite based on the radius
+          yScale: 1,//rad / 400 // Adjust the y-scale of the sprite based on the radius
         }
       }
     });
@@ -341,7 +344,8 @@ function addBody(x, y, index, inertia = 0) {
   // return
   const fruit = fruits[index];
   // const color = colors[index]; // Get the color from colors array
-  const xScale = fruit.radius * 2 / 200
+  const xScale = 1
+  console.log({ fruit })
   const body = Bodies.circle(x, y, fruit.radius, {
     index: index,
     isSleeping: false,
@@ -351,12 +355,14 @@ function addBody(x, y, index, inertia = 0) {
     // mass: 1, // function of density and area
     slop: 0.0001, // 0.05 // boundary tolerance
     render: {
-      // fillStyle: color, // Set the fillStyle to the color
+      // fillStyle: 'rgb(255,0,0)', // Set the fillStyle to the color
       sprite: {
         texture: `fin/${pics[index]}.png`,
         xScale: xScale, // Adjust the x-scale of the sprite based on the radius
         yScale: xScale // Adjust the y-scale of the sprite based on the radius
-      }
+      },
+      strokeStyle: 'black', // Set the outline color
+      lineWidth: 2 // Set the outline width
     },
     inertia: inertia,
     restitution: 0.2,
@@ -747,4 +753,5 @@ const randomHexColor = () => '#' + Math.floor(Math.random() * 16777215).toString
 // engine.gravity.y = 0;
 // engine.gravity.x = 0;
 
-// let colors = []
+// let colors = []    
+   
