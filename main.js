@@ -14,7 +14,9 @@ const thick = 50
 const dropRate = 200
 const maxRadius = pickVariety * radiusStep + radiusOffset
 const bgColor = '#ddd'//randomHexColor()
-const wallColor = 'rgba(0,0,0,0)'//bgColor//'#999'//randomHexColor()
+const wallColor = 'rgba(0,0,0,100)'//bgColor//'#999'//randomHexColor()
+var globalGroups = {}
+console.log({ globalGroups })
 
 let loadedAudio, timeoutId, render, engine, world, width, height, smallerMultiplyer, isPortrait
 let muted = false
@@ -31,6 +33,7 @@ init()
 // functions
 // -----------------
 function init() {
+  console.log('init')
   resetTimeout();
   fetch(soundUrl)
     .then((response) => response.blob())
@@ -101,6 +104,7 @@ function setDimensions() {
 
 
 function makeFrame(FRAME) {
+  console.log('makeFrame')
   // remove all static elements
   const bodies = world.bodies.filter((body) => body.isStatic);
   World.remove(world, bodies);
@@ -220,13 +224,13 @@ function addFruit() {
   const index = Math.floor(Math.random() * pickVariety);
   const x = (Math.random() * (width - thick * 2 - maxRadius)) + thick + maxRadius / 2;
   const y = thick + maxRadius;
+  // addBody(width / 2, height / 2, index)
   addBody(x, y, index)
 }
 
 var globalGroup = false
 async function addFish(x, y, index) {
   if (globalGroup) {
-    console.log({ globalGroup })
     // const copiedGroup = Common.clone(globalGroup);
     const newClone = structuralClone(globalGroup)
     newClone.bodies.forEach((body) => {
@@ -243,19 +247,13 @@ async function addFish(x, y, index) {
   }
   const response = await fetch('svg/goldfish.svg');
   const svgText = await response.text();
-  console.log({ svgText })
   const parser = new DOMParser();
   const svgDoc = parser.parseFromString(svgText, 'image/svg+xml');
-  console.log({ svgDoc })
   const svgPaths = svgDoc.getElementsByTagName('path');
-  console.log({ svgPaths })
   const vertices = [...svgPaths].map((path) => {
-    console.log({ path })
     const vertice = Svg.pathToVertices(path);
-    console.log({ vertice })
     return vertice
   })
-  console.log({ vertices });
   const body = Bodies.fromVertices(x, y, vertices, {
     isStatic: false,
     index: 9,
@@ -338,14 +336,138 @@ function structuralClone(obj) {
   return new Notification('', { data: obj, silent: true }).data;
 }
 
+async function addCustomSVG(x, y, index) {
+  if (globalGroups.hasOwnProperty(index)) {
+    // const copiedGroup = Common.clone(globalGroup);
+    const newClone = structuralClone(globalGroups[index])
+    // TODO: confirm this is necessary
+    newClone.bodies.forEach((body) => {
+      body.id = Common.nextId()
+    })
+    const currentLocation = newClone.bodies[0].position
+    const deltaX = x - currentLocation.x
+    const deltaY = y - currentLocation.y
+    // Composite.setPosition(newClone, { x, y });
+    Composite.translate(newClone, { x: deltaX, y: deltaY });
+    Composite.add(world, newClone);
+    return;
+  }
+  const response = await fetch(`shapes/${index + 1}.svg`);
+  const svgText = await response.text();
+
+  const parser = new DOMParser();
+  const svgDoc = parser.parseFromString(svgText, 'image/svg+xml');
+
+  const svgPaths = svgDoc.getElementsByTagName('path');
+
+  const vertices = [...svgPaths].map((path) => {
+    const vertice = Svg.pathToVertices(path, 1).filter(
+      (v, index, self) =>
+        index === self.findIndex((s) => ~~s.x === ~~v.x && ~~s.y === ~~v.y)
+    );
+    return vertice
+  })
+
+  const radius = 2 * (index * radiusStep + radiusOffset);
+  const startingRadius = 200
+
+  const scaleBy = radius / startingRadius
+
+  const body = Bodies.fromVertices(x, y, vertices, {
+    index: index,
+    density: 0.01, // 0.001
+    friction: 0.1, // 0.1
+    frictionStatic: 0.5, // 0.5
+    slop: 0.0001, // 0.05 // boundary tolerance
+    restitution: 0.2,
+    render: {
+      visible: true, // TODO: change this
+      sprite: {
+        fillStyle: 'none',
+        strokeStyle: 'none',
+        lineWidth: 1,
+        slop: 1,
+        // texture: `fin/${index + 1}.png`,
+        xScale: 1,
+        yScale: 1
+      }
+    }
+  }, true, false, undefined, true);
+
+  Body.scale(body, scaleBy, scaleBy);
+
+  let group = Composite.create({ label: `group` })
+  Composite.add(group, [body])
+  Composite.add(world, group);
+  globalGroups[index] = structuralClone(group)
+
+  // // TODO: check this
+  // const scaleBy = 0.9
+  // Body.scale(body, scaleBy, scaleBy);
+  // // Body.rotate(body, -0.02);
+  // let spriteHolder = Bodies.rectangle(
+  //   body.bounds.min.x,
+  //   body.bounds.min.y,
+  //   (body.bounds.max.x - body.bounds.min.x),
+  //   (body.bounds.max.y - body.bounds.min.y),
+  //   {
+  //     collisionFilter: {
+  //       mask: 0
+  //     },
+  //     render: {
+  //       // visible: false,
+  //       fillStyle: 'none',
+  //       strokeStyle: 'rgba(0,0,0,0)',
+  //       sprite: {
+  //         texture: `fin/${index + 1}.png`,
+  //         xOffset: 0,//-0.02,
+  //         yOffset: 0,//0.04,
+  //         xScale: 1, //scaleBy * 0.2476190476,
+  //         yScale: 1, //scaleBy * 0.2476190476,
+  //       }
+  //     }
+  //   }
+  // )
+  // let constraint = Constraint.create({
+  //   bodyA: body,
+  //   pointA: { x: 0, y: 100 },
+  //   bodyB: spriteHolder,
+  //   pointB: { x: 0, y: 100 },
+  //   length: 0,
+  //   stiffness: 1.1,
+  //   render: {
+  //     // visible: false
+  //   }
+  // })
+  // let constraint2 = Constraint.create({
+  //   bodyA: body,
+  //   pointA: { x: 0, y: -100 },
+  //   bodyB: spriteHolder,
+  //   pointB: { x: 0, y: -100 },
+  //   length: 0,
+  //   stiffness: 1.1,
+  //   render: {
+  //     // visible: false
+  //   }
+  // })
+  // let group = Composite.create({ label: `group` })
+  // // Body.scale(group, 0.2, 0.2);
+  // Composite.add(group, [body, spriteHolder, constraint, constraint2])
+  // Composite.add(world, group)
+  // globalGroups[index] = structuralClone(group)
+}
+
 // addFish(width / 2, height / 2)
 function addBody(x, y, index, inertia = 0) {
+  if (index < 4) {
+    addCustomSVG(x, y, index)
+    return
+  }
   // addFish(x, y)
   // return
   const fruit = fruits[index];
   // const color = colors[index]; // Get the color from colors array
   const xScale = 1
-  console.log({ fruit })
   const body = Bodies.circle(x, y, fruit.radius, {
     index: index,
     isSleeping: false,
@@ -354,6 +476,8 @@ function addBody(x, y, index, inertia = 0) {
     frictionStatic: 0.5, // 0.5
     // mass: 1, // function of density and area
     slop: 0.0001, // 0.05 // boundary tolerance
+    inertia: inertia,
+    restitution: 0.2,
     render: {
       // fillStyle: 'rgb(255,0,0)', // Set the fillStyle to the color
       sprite: {
@@ -364,8 +488,6 @@ function addBody(x, y, index, inertia = 0) {
       strokeStyle: 'black', // Set the outline color
       lineWidth: 2 // Set the outline width
     },
-    inertia: inertia,
-    restitution: 0.2,
   });
   World.add(world, body);
 }
@@ -473,7 +595,6 @@ function playSound(index) {
 Events.on(engine, "collisionStart", (event) => {
   const filteredPairs = []
   event.pairs.forEach((pair) => {
-    // console.log(pair.bodyA)
     // is bodyA and bodyB in the list already?
     if (pair.bodyA.index === pair.bodyB.index) {
       const bodyAIsInList = filteredPairs.find((item) => item.bodyA.id === pair.bodyA.id)
@@ -492,7 +613,9 @@ Events.on(engine, "collisionStart", (event) => {
   filteredPairs.forEach((pair) => {
     if (pair.bodyA.index === pair.bodyB.index) {
       const index = pair.bodyA.index;
-      World.remove(world, [pair.bodyA, pair.bodyB]);
+      // World.remove(world, pair.bodyA.parts)
+      // Composite.remove(world, pair.bodyA, true)
+      World.remove(world, [pair.bodyA, pair.bodyB], true);
       playSound(index)
       if (index !== fruits.length - 1) {
         const x = pair.collision.supports[0].x;
@@ -591,6 +714,7 @@ function moveObjectsTowardsCenter() {
   });
   // Determine if a body is in contact with a static element
   function isBodyInContactWithStatic(body) {
+
     const staticElements = world.bodies.filter((element) => element.isStatic);
 
     for (let i = 0; i < staticElements.length; i++) {
@@ -754,4 +878,3 @@ const randomHexColor = () => '#' + Math.floor(Math.random() * 16777215).toString
 // engine.gravity.x = 0;
 
 // let colors = []    
-   

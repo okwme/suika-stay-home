@@ -7,11 +7,11 @@
     "suika-cli": "bin/cli.js"
   },
   "scripts": {
-    "dev": "concurrently \"yarn watch\" \"yarn vite-dev\"",
+    "dev": "concurrently \"npm run watch\" \"npm run vite-dev\"",
     "vite-dev": "vite --open",
-    "watch": "chokidar 'raw' -c 'yarn gen-img'",
+    "watch": "chokidar 'raw' -c 'npm run gen-img'",
     "gen-img": "./bin/cli.cjs img",
-    "build": "yarn gen-img && vite build",
+    "build": "npm run gen-img && vite build",
     "preview": "vite preview"
   },
   "devDependencies": {
@@ -20,7 +20,10 @@
     "commander": "^11.1.0",
     "concurrently": "^6.2.2",
     "sharp": "^0.33.0",
-    "vite": "^4.4.5"
+    "svg2js": "^0.0.4-alpha1",
+    "vite": "^4.4.5",
+    "xml2js": "^0.6.2",
+    "xmldom": "^0.6.0"
   },
   "dependencies": {
     "clone": "^2.1.2",
