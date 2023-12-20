@@ -6,19 +6,20 @@
     <script src="//cdn.jsdelivr.net/npm/poly-decomp@0.3.0/build/decomp.min.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script src="//cdn.jsdelivr.net/npm/pathseg@1.2.1/pathseg.min.js"></script>
-
+    <script src="/p5.min.js"></script>
     <title>Suika Stay Home - スイカゲーム</title>
     <style>
       body {
         text-align: center;
+        background-color: lightgrey;
       }
 
       canvas {
         position: absolute;
         top: 0;
         left: 0;
-        width: 100%;
-        height: 100%;
+        width: 100% !important;
+        height: 100% !important;
         object-fit: contain;
       }
       #mute {
@@ -38,10 +39,32 @@
       .hidden {
         display: none;
       }
-    </style>
-  </head>
-  <body>
-    <script type="module" src="/main.js"></script>
-    <div id="mute"></div>
-  </body>
-</html>
+    
+          #video-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+          }
+        </style>
+      </head>
+      <body>
+        <script type="module" src="/main.js"></script>
+        <!-- <script src="/bubbles.js"></script> -->
+        <div id="p5"></div>
+        <div id="bubbles"></div>
+        <div id="suika"></div>
+        <div id="mute"></div>
+        <div id="video-background">
+          <!-- <iframe
+            width="100%"
+            height="100%"
+            src="https://www.youtube.com/embed/5zd6PsWx5E0?autoplay=1&mute=1&controls=0&loop=1&playlist=5zd6PsWx5E0"
+            frameborder="0"
+            allow="autoplay"
+            allowfullscreen></iframe> -->
+        </div>
+      </body>
+    </html>

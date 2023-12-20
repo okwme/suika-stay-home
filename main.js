@@ -13,12 +13,14 @@ const max = 1000
 const thick = 50
 const dropRate = 200
 const maxRadius = pickVariety * radiusStep + radiusOffset
-const bgColor = '#ddd'//randomHexColor()
-const wallColor = 'rgba(0,0,0,100)'//bgColor//'#999'//randomHexColor()
+const bgColor = 'rgba(0,0,0,0)'//randomHexColor()
+const wallColor = 'rgba(0,0,0,0)'//bgColor//'#999'//randomHexColor()
 var globalGroups = {}
 console.log({ globalGroups })
+const isSleeping = false, density = 0.01, friction = 0.1, frictionStatic = 0.5, slop = 0.0001, restitution = 0.2
 
 let loadedAudio, timeoutId, render, engine, world, width, height, smallerMultiplyer, isPortrait
+let bubbleRender, bubbleEngine, bubbleWorld
 let muted = false
 let currentlyPlaying = 0
 let isPaused = false;
@@ -44,11 +46,14 @@ function init() {
   setDimensions()
   makeFruit()
   buildWorldEngine()
+  buildBubbleEngine()
   makeFrame(frameType)
   run()
   addFruit()
+  addBubble()
   setInterval(() => {
     if (!isPaused) {
+      addBubble()
       addFruit()
     }
   }, dropRate)
@@ -62,13 +67,36 @@ function makeFruit() {
   }
 }
 
+function buildBubbleEngine() {
+  bubbleEngine = Engine.create();
+  bubbleEngine.gravity.y = -1; // Set negative gravity on the y scale
+  bubbleRender = Render.create({
+    engine: bubbleEngine,
+    element: document.getElementById('bubbles'),
+    options: {
+      showCollisions: false,
+      wireframes: false,
+      debug: false,
+      background: bgColor,
+      width,
+      height,
+      // showIds: true,
+      // showSeparations: true,
+    }
+  });
+  bubbleWorld = bubbleEngine.world;
+  Render.run(bubbleRender);
+}
+
 function buildWorldEngine() {
   engine = Engine.create();
   render = Render.create({
     engine,
-    element: document.body,
+    element: document.getElementById('suika'),
     options: {
+      showCollisions: false,
       wireframes: false,
+      debug: false,
       background: bgColor,
       width,
       height,
@@ -104,7 +132,7 @@ function setDimensions() {
 
 
 function makeFrame(FRAME) {
-  console.log('makeFrame')
+  // console.log('makeFrame')
   // remove all static elements
   const bodies = world.bodies.filter((body) => body.isStatic);
   World.remove(world, bodies);
@@ -116,7 +144,7 @@ function makeFrame(FRAME) {
     default:
       makeSquareFrame()
   }
-  drawFruits()
+  // drawFruits()
 }
 
 function makeTriangleFrame() {
@@ -179,7 +207,9 @@ function makeSquareFrame() {
     // isSensor: true,
     render: { fillStyle: wallColor }
   })
-  World.add(world, [leftWall, rightWall, ground, topLine]);
+
+  World.add(world, [leftWall, rightWall, ground]);
+  World.add(bubbleWorld, [leftWall, rightWall, topLine])
 }
 
 
@@ -215,131 +245,179 @@ function drawFruits() {
 function run() {
   // Runner.run(engine);
   if (!isPaused) {
+    Engine.update(bubbleEngine, 1000 / 60); // update the engine
     Engine.update(engine, 1000 / 60); // update the engine
   }
   requestAnimationFrame(run);
 }
 
+function addBubble() {
+  const index = Math.floor(Math.random() * pickVariety);
+  const x = (Math.random() * (width - thick * 2 - maxRadius)) + thick + maxRadius / 2;
+  const y = height - maxRadius
+  addBubbleBody(x, y, index)
+}
 function addFruit() {
   const index = Math.floor(Math.random() * pickVariety);
   const x = (Math.random() * (width - thick * 2 - maxRadius)) + thick + maxRadius / 2;
-  const y = thick + maxRadius;
+  const y = -maxRadius;//thick + maxRadius;
   // addBody(width / 2, height / 2, index)
   addBody(x, y, index)
 }
 
-var globalGroup = false
-async function addFish(x, y, index) {
-  if (globalGroup) {
-    // const copiedGroup = Common.clone(globalGroup);
-    const newClone = structuralClone(globalGroup)
-    newClone.bodies.forEach((body) => {
-      body.id = Common.nextId()
-    })
-    const currentLocation = newClone.bodies[0].position
-    const deltaX = x - currentLocation.x
-    const deltaY = y - currentLocation.y
+// var globalGroup = false
+// async function addFish(x, y, index) {
+//   if (globalGroup) {
+//     // const copiedGroup = Common.clone(globalGroup);
+//     const newClone = structuralClone(globalGroup)
+//     newClone.bodies.forEach((body) => {
+//       body.id = Common.nextId()
+//     })
+//     const currentLocation = newClone.bodies[0].position
+//     const deltaX = x - currentLocation.x
+//     const deltaY = y - currentLocation.y
 
-    // Composite.setPosition(newClone, { x, y });
-    Composite.translate(newClone, { x: deltaX, y: deltaY });
-    Composite.add(world, newClone);
-    return;
+//     // Composite.setPosition(newClone, { x, y });
+//     Composite.translate(newClone, { x: deltaX, y: deltaY });
+//     Composite.add(world, newClone);
+//     return;
+//   }
+//   const response = await fetch('svg/goldfish.svg');
+//   const svgText = await response.text();
+//   const parser = new DOMParser();
+//   const svgDoc = parser.parseFromString(svgText, 'image/svg+xml');
+//   const svgPaths = svgDoc.getElementsByTagName('path');
+//   const vertices = [...svgPaths].map((path) => {
+//     const vertice = Svg.pathToVertices(path);
+//     return vertice
+//   })
+//   const body = Bodies.fromVertices(x, y, vertices, {
+//     isStatic: false,
+//     index: 9,
+//     render: {
+//       visible: false,
+//       sprite: {
+//         fillStyle: 'none',
+//         strokeStyle: 'none',
+//         lineWidth: 1,
+//         slop: 1,
+//         // texture: `svg/goldfish.png`,
+//         // xScale: 0.05,
+//         // yScale: 0.05
+//       }
+//     }
+//   }, true, false, undefined, true);
+//   const scaleBy = 0.21
+//   Body.scale(body, scaleBy, scaleBy);
+//   // Body.rotate(body, -0.02);
+//   let spriteHolder = Bodies.rectangle(
+//     body.bounds.min.x,
+//     body.bounds.min.y,
+//     (body.bounds.max.x - body.bounds.min.x),
+//     (body.bounds.max.y - body.bounds.min.y),
+//     {
+//       collisionFilter: {
+//         mask: 0
+//       },
+//       render: {
+//         // visible: false,
+//         fillStyle: 'none',
+//         strokeStyle: 'rgba(0,0,0,0)',
+//         sprite: {
+//           texture: `svg/goldfish.png`,
+//           xOffset: -0.02,
+//           yOffset: 0.04,
+//           xScale: scaleBy * 0.2476190476,
+//           yScale: scaleBy * 0.2476190476,
+//         }
+//       }
+//     }
+//   )
+//   let constraint = Constraint.create({
+//     bodyA: body,
+//     pointA: { x: 0, y: 100 },
+//     bodyB: spriteHolder,
+//     pointB: { x: 0, y: 100 },
+//     length: 0,
+//     stiffness: 1.1,
+//     render: {
+//       visible: false
+//     }
+//   })
+//   let constraint2 = Constraint.create({
+//     bodyA: body,
+//     pointA: { x: 0, y: -100 },
+//     bodyB: spriteHolder,
+//     pointB: { x: 0, y: -100 },
+//     length: 0,
+//     stiffness: 1.1,
+//     render: {
+//       visible: false
+//     }
+//   })
+//   let group = Composite.create({ label: `group` })
+//   // Body.scale(group, 0.2, 0.2);
+//   Composite.add(group, [body, spriteHolder, constraint, constraint2])
+//   Composite.add(world, group)
+//   globalGroup = structuralClone(group)
+
+//   // body.parts.forEach((part, i) => {
+//   //   if (i == 0) return
+//   //   part.sprite = null
+//   // })
+//   // console.log({ body })
+//   // World.add(world, body);
+//   // return group
+// }
+// function structuralClone(obj, index) {
+//   console.time('structuralClone')
+//   // const cl = new Notification('', { data: obj, silent: true }).data;
+//   // const cl = JSON.parse(JSON.stringify(obj));
+//   // const cl = Object.create(Object.getPrototypeOf(obj));
+//   const cl = Common.clone(obj, true);
+//   console.log(index)
+
+//   console.timeEnd('structuralClone')
+//   return cl;
+// }
+function structuralClone(obj, index) {
+  const sizeInBytes = getObjectSize(obj);
+  console.log(index, { sizeInBytes })
+  console.time('structuralClone')
+  const oldState = history.state;
+  history.replaceState(obj, document.title);
+  const copy = history.state;
+  history.replaceState(oldState, document.title);
+  console.log({ index })
+  console.timeEnd('structuralClone')
+  return copy;
+}
+function getObjectSize(obj, visited = new Set()) {
+  let size = 0;
+
+  for (const key in obj) {
+    if (obj.hasOwnProperty(key)) {
+      size += key.length * 2; // 2 bytes per character
+      const value = obj[key];
+      if (typeof value === 'object' && value !== null && !visited.has(value)) {
+        visited.add(value);
+        size += getObjectSize(value, visited);
+      } else {
+        size += String(value).length * 2;
+      }
+    }
   }
-  const response = await fetch('svg/goldfish.svg');
-  const svgText = await response.text();
-  const parser = new DOMParser();
-  const svgDoc = parser.parseFromString(svgText, 'image/svg+xml');
-  const svgPaths = svgDoc.getElementsByTagName('path');
-  const vertices = [...svgPaths].map((path) => {
-    const vertice = Svg.pathToVertices(path);
-    return vertice
-  })
-  const body = Bodies.fromVertices(x, y, vertices, {
-    isStatic: false,
-    index: 9,
-    render: {
-      visible: false,
-      sprite: {
-        fillStyle: 'none',
-        strokeStyle: 'none',
-        lineWidth: 1,
-        slop: 1,
-        // texture: `svg/goldfish.png`,
-        // xScale: 0.05,
-        // yScale: 0.05
-      }
-    }
-  }, true, false, undefined, true);
-  const scaleBy = 0.21
-  Body.scale(body, scaleBy, scaleBy);
-  // Body.rotate(body, -0.02);
-  let spriteHolder = Bodies.rectangle(
-    body.bounds.min.x,
-    body.bounds.min.y,
-    (body.bounds.max.x - body.bounds.min.x),
-    (body.bounds.max.y - body.bounds.min.y),
-    {
-      collisionFilter: {
-        mask: 0
-      },
-      render: {
-        // visible: false,
-        fillStyle: 'none',
-        strokeStyle: 'rgba(0,0,0,0)',
-        sprite: {
-          texture: `svg/goldfish.png`,
-          xOffset: -0.02,
-          yOffset: 0.04,
-          xScale: scaleBy * 0.2476190476,
-          yScale: scaleBy * 0.2476190476,
-        }
-      }
-    }
-  )
-  let constraint = Constraint.create({
-    bodyA: body,
-    pointA: { x: 0, y: 100 },
-    bodyB: spriteHolder,
-    pointB: { x: 0, y: 100 },
-    length: 0,
-    stiffness: 1.1,
-    render: {
-      visible: false
-    }
-  })
-  let constraint2 = Constraint.create({
-    bodyA: body,
-    pointA: { x: 0, y: -100 },
-    bodyB: spriteHolder,
-    pointB: { x: 0, y: -100 },
-    length: 0,
-    stiffness: 1.1,
-    render: {
-      visible: false
-    }
-  })
-  let group = Composite.create({ label: `group` })
-  // Body.scale(group, 0.2, 0.2);
-  Composite.add(group, [body, spriteHolder, constraint, constraint2])
-  Composite.add(world, group)
-  globalGroup = structuralClone(group)
 
-  // body.parts.forEach((part, i) => {
-  //   if (i == 0) return
-  //   part.sprite = null
-  // })
-  // console.log({ body })
-  // World.add(world, body);
-  // return group
+  return size;
 }
-function structuralClone(obj) {
-  return new Notification('', { data: obj, silent: true }).data;
-}
+
+
 
 async function addCustomSVG(x, y, index) {
   if (globalGroups.hasOwnProperty(index)) {
     // const copiedGroup = Common.clone(globalGroup);
-    const newClone = structuralClone(globalGroups[index])
+    const newClone = structuralClone(globalGroups[index], index)
+    console.time('addCustomSVG-indexed')
     // TODO: confirm this is necessary
     newClone.bodies.forEach((body) => {
       body.id = Common.nextId()
@@ -350,8 +428,10 @@ async function addCustomSVG(x, y, index) {
     // Composite.setPosition(newClone, { x, y });
     Composite.translate(newClone, { x: deltaX, y: deltaY });
     Composite.add(world, newClone);
+    console.timeEnd('addCustomSVG-indexed')
     return;
   }
+  console.time('addCustomSVG')
   const response = await fetch(`shapes/${index + 1}.svg`);
   const svgText = await response.text();
 
@@ -369,6 +449,7 @@ async function addCustomSVG(x, y, index) {
   })
 
   const radius = 2 * (index * radiusStep + radiusOffset);
+  // const radius = 2 * (3 * radiusStep + radiusOffset);
   const startingRadius = 200
 
   const scaleBy = radius / startingRadius
@@ -399,7 +480,10 @@ async function addCustomSVG(x, y, index) {
   let group = Composite.create({ label: `group` })
   Composite.add(group, [body])
   Composite.add(world, group);
-  globalGroups[index] = structuralClone(group)
+  console.timeEnd('addCustomSVG')
+  if (!globalGroups.hasOwnProperty(index)) {
+    globalGroups[index] = structuralClone(group, index)
+  }
 
   // // TODO: check this
   // const scaleBy = 0.9
@@ -458,26 +542,50 @@ async function addCustomSVG(x, y, index) {
 }
 
 // addFish(width / 2, height / 2)
+
+function addBubbleBody(x, y, index, inertia = 0) {
+  const radius = 30 + (index * 10)
+  const body = Bodies.circle(x, y, radius, {
+    index,
+    isSleeping,
+    density, // 0.001
+    friction, // 0.1
+    frictionStatic, // 0.5
+    // mass: 1, // function of density and area
+    slop, // 0.05 // boundary tolerance
+    inertia,
+    restitution,
+    render: {
+      fillStyle: 'rgba(255,255,255, 0.5)', // Set the fillStyle to the color
+      strokeStyle: 'rgba(255,255,255,0.5)',
+      lineWidth: 0.5 // Set the outline width
+    }
+  })
+  World.add(bubbleWorld, body);
+
+}
+
 function addBody(x, y, index, inertia = 0) {
-  if (index < 4) {
-    addCustomSVG(x, y, index)
-    return
-  }
+  // if (index < 4) {
+  //   addCustomSVG(x, y, index)
+  //   return
+  // }
+  // console.time('addbody')
   // addFish(x, y)
   // return
   const fruit = fruits[index];
   // const color = colors[index]; // Get the color from colors array
   const xScale = 1
   const body = Bodies.circle(x, y, fruit.radius, {
-    index: index,
-    isSleeping: false,
-    density: 0.01, // 0.001
-    friction: 0.1, // 0.1
-    frictionStatic: 0.5, // 0.5
+    index,
+    isSleeping,
+    density, // 0.001
+    friction, // 0.1
+    frictionStatic, // 0.5
     // mass: 1, // function of density and area
-    slop: 0.0001, // 0.05 // boundary tolerance
-    inertia: inertia,
-    restitution: 0.2,
+    slop, // 0.05 // boundary tolerance
+    inertia,
+    restitution,
     render: {
       // fillStyle: 'rgb(255,0,0)', // Set the fillStyle to the color
       sprite: {
@@ -490,9 +598,8 @@ function addBody(x, y, index, inertia = 0) {
     },
   });
   World.add(world, body);
+  // console.timeEnd('addbody')
 }
-
-
 
 function mute() {
   muted = !muted
@@ -510,80 +617,57 @@ function resetTimeout() {
   clearTimeout(timeoutId);
   timeoutId = setTimeout(hideMuteElement, 3000);
 }
+const numSounds = 7;
+const soundRanges = [
+  [1.570, 2.250],
+  [2.914, 3.450],
+  [4.213, 4.787],
+  [5.557, 6.222],
+  [6.781, 7.400],
+  [8.775, 9],
+  [9.7, 10.1]
+];
+
 function playSound(index) {
-  // const uid = Math.random().toString(36).substr(2, 9);
   let sound = new Audio(loadedAudio);
 
-  const numSounds = 7
-  index = index % numSounds
-  let start, end
-  switch (index) {
-    case 0:
-      start = 1.570;
-      end = 2.250
-      break
-    case 1:
-      start = 2.914
-      end = 3.450
-      break
-    case 2:
-      start = 4.213
-      end = 4.787
-      break
-    case 3:
-      start = 5.557
-      end = 6.222
-      break
-    case 4:
-      start = 6.781
-      end = 7.400
-      break
-    case 5:
-      start = 8.775
-      end = 9
-      break
-    case 6:
-      start = 9.7
-      end = 10.1
-      break
-    default:
-      throw new Error('no sound for index')
-  }
-  const nowMilliseconds = new Date().getTime()
-  const volume = ((index + 1) / 10)
-  sound.volume = volume
-  sound.currentTime = start
+  index = index % numSounds;
+  const [start, end] = soundRanges[index];
+  const nowMilliseconds = new Date().getTime();
+  const volume = (index + 1) / 10;
+  sound.volume = volume;
+  sound.currentTime = start;
+
   function onPlay() {
-    currentlyPlaying++
-    const totalBodies = world.bodies.length
-    const newNowMilliseconds = new Date().getTime()
-    const timeToPlay = newNowMilliseconds - nowMilliseconds
-    // console.log({ timeToPlay, currentlyPlaying, totalBodies })
-    // console.log(`play ${index + 1} - ${volume} - ${uid}`)
+    currentlyPlaying++;
+    const totalBodies = world.bodies.length;
+    const newNowMilliseconds = new Date().getTime();
+    const timeToPlay = newNowMilliseconds - nowMilliseconds;
+
     if (timeToPlay > 200) {
-      sound.pause()
-      currentlyPlaying--
+      sound.pause();
+      currentlyPlaying--;
       setTimeout(() => {
-        sound = null
-      }, 150)
+        sound = null;
+      }, 150);
     } else {
       setTimeout(() => {
-        // console.log(`pause ${index + 1} - ${volume} - ${uid}`)
         sound.pause();
-        currentlyPlaying--
+        currentlyPlaying--;
         setTimeout(() => {
-          sound = null
-        }, 150)
+          sound = null;
+        }, 150);
       }, Math.floor((end - start) * 1000));
     }
-    sound.removeEventListener('playing', onPlay)
+    sound.removeEventListener('playing', onPlay);
   }
-  sound.addEventListener('playing', onPlay)
+
+  sound.addEventListener('playing', onPlay);
   if (!muted) {
     sound.play().catch((e) => {
-      mute()
-      console.error({ e })
-    })
+      mute();
+      console.error({ e });
+    });
   }
 }
 
@@ -592,39 +676,136 @@ function playSound(index) {
 // event listeners
 // -----------------
 
-Events.on(engine, "collisionStart", (event) => {
-  const filteredPairs = []
-  event.pairs.forEach((pair) => {
-    // is bodyA and bodyB in the list already?
-    if (pair.bodyA.index === pair.bodyB.index) {
-      const bodyAIsInList = filteredPairs.find((item) => item.bodyA.id === pair.bodyA.id)
-      const bodyBIsInList = filteredPairs.find((item) => item.bodyB.id === pair.bodyB.id)
-      if (!bodyAIsInList && !bodyBIsInList) {
-        filteredPairs.push(pair)
-      }
-    }
-  })
-  if (event.pairs.length > 100) {
-    console.log({ event })
-    console.log({ eventPairs: event.pairs.length })
-    console.log(`Event has ${event.pairs.length} pairs`)
-    console.log(`Filtered list has ${filteredPairs.length} pairs`)
-  }
-  filteredPairs.forEach((pair) => {
-    if (pair.bodyA.index === pair.bodyB.index) {
-      const index = pair.bodyA.index;
-      // World.remove(world, pair.bodyA.parts)
-      // Composite.remove(world, pair.bodyA, true)
-      World.remove(world, [pair.bodyA, pair.bodyB], true);
-      playSound(index)
+Events.on(bubbleEngine, 'collisionStart', (event) => {
+  for (let i = 0; i < event.pairs.length; i++) {
+    const bodyA = event.pairs[i].bodyA;
+    const bodyB = event.pairs[i].bodyB;
+    const collision = event.pairs[i].collision;
+
+    if (bodyA.index === bodyB.index) {
+      const index = bodyA.index;
+      World.remove(bubbleWorld, [bodyA, bodyB], true);
       if (index !== fruits.length - 1) {
-        const x = pair.collision.supports[0].x;
-        const y = pair.collision.supports[0].y;
-        const combinedInertia = pair.bodyA.inertia + pair.bodyB.inertia;
-        addBody(x, y, index + 1, combinedInertia)
+        const { x, y } = collision.supports[0];
+        const combinedInertia = bodyA.inertia + bodyB.inertia;
+        addBubbleBody(x, y, index + 1, combinedInertia);
+        // addFlash(x, y)
+        // flashScreen(index)
+        break; // Exit the for loop
       }
     }
+  }
+
+})
+
+Events.on(engine, "collisionStart", (event) => {
+  // const filteredPairs = new Map();
+  // event.pairs.forEach(({ bodyA, bodyB, collision }) => {
+  //   if (bodyA.index === bodyB.index) {
+  //     if (!filteredPairs.has(bodyA.id) && !filteredPairs.has(bodyB.id)) {
+  //       filteredPairs.set(bodyA.id, true);
+  //       filteredPairs.set(bodyB.id, true);
+  //     }
+  //   }
+  // });
+
+  if (event.pairs.length > 100) {
+    console.log({ event });
+    console.log({ eventPairs: event.pairs.length });
+    console.log(`Event has ${event.pairs.length} pairs`);
+    // console.log(`Filtered set has ${filteredPairs.size} pairs`);
+  }
+
+  for (let i = 0; i < event.pairs.length; i++) {
+    const bodyA = event.pairs[i].bodyA;
+    const bodyB = event.pairs[i].bodyB;
+    const collision = event.pairs[i].collision;
+
+    if (bodyA.index === bodyB.index) {
+      const index = bodyA.index;
+      World.remove(world, [bodyA, bodyB], true);
+      playSound(index);
+      if (index !== fruits.length - 1) {
+        const { x, y } = collision.supports[0];
+        const combinedInertia = bodyA.inertia + bodyB.inertia;
+        addBody(x, y, index + 1, combinedInertia);
+        // addFlash(x, y)
+        // flashScreen(index)
+        break; // Exit the for loop
+      }
+    }
+  }
+});
+
+
+function addFlash(x, y) {
+  const angle = Math.PI / 5; // Angle between each point of the star
+  const radiusOuter = 50; // Outer radius of the star
+  const radiusInner = 30; // Inner radius of the star
+
+  const starVertices = [];
+  for (let i = 0; i < 9; i++) {
+    const radius = i % 2 === 0 ? radiusOuter : radiusInner;
+    const currAngle = i * angle;
+    const vertexX = x + radius * Math.cos(currAngle);
+    const vertexY = y + radius * Math.sin(currAngle);
+    starVertices.push({ x: vertexX, y: vertexY });
+  }
+
+  const staticElement = Bodies.fromVertices(x, y, [starVertices], {
+    isStatic: true,
+    render: { fillStyle: 'yellow' }
   });
+  World.add(world, staticElement);
+
+  setTimeout(() => {
+    World.remove(world, staticElement);
+  }, 200);
+}
+
+
+let flashes = 0
+function convertToRGBA(index) {
+
+}
+
+function flashScreen(index) {
+  flashes++
+  console.log({ flashes })
+  const backgroundElement = document.createElement('div');
+  backgroundElement.style.position = 'fixed';
+  backgroundElement.style.top = '0';
+  backgroundElement.style.left = '0';
+  backgroundElement.style.width = '100%';
+  backgroundElement.style.height = '100%';
+  // backgroundElement.style.backgroundColor = 'rgba(255,0,0,0.2)';
+  console.log(convertToRGBA(index))
+  backgroundElement.style.backgroundColor = convertToRGBA(index);
+  backgroundElement.style.opacity = '1';
+  backgroundElement.style.transition = 'opacity 200ms';
+  backgroundElement.style.zIndex = '-1';
+
+  document.body.appendChild(backgroundElement);
+
+  setTimeout(() => {
+    backgroundElement.style.opacity = '0';
+    setTimeout(() => {
+      flashes--
+      backgroundElement.remove();
+    }, 200);
+  }, 0);
+}
+let wasPaused = false
+document.addEventListener('visibilitychange', () => {
+  console.log('visibility changed')
+  if (document.visibilityState === 'hidden') {
+    wasPaused = isPaused
+    isPaused = true
+  } else {
+    if (!wasPaused) {
+      isPaused = false
+    }
+  }
 });
 
 document.querySelector("canvas").addEventListener("click", () => {
@@ -655,22 +836,7 @@ window.addEventListener('resize', throttle(() => {
   // isPaused = false;
 }, 10)); // Adjust the delay (in milliseconds) as per your requirement
 
-function readjustObjects() {
-  const bodies = world.bodies.filter((body) => !body.isStatic);
-  bodies.forEach((body) => {
-    const x = body.position.x;
-    const y = body.position.y;
-    console.log({ x, smallerMultiplyer })
-    if (!isPortrait) {
-      const newX = x * smallerMultiplyer;
-      Body.setPosition(body, { x: newX, y });
-    } else {
-      const newY = y * smallerMultiplyer;
-      Body.setPosition(body, { x, y: newY });
-    }
-    // Body.scale(body, smallerMultiplyer, smallerMultiplyer);
-  });
-}
+
 function throttle(func, delay) {
   let timeoutId;
   let lastExecutedTime = 0;
@@ -693,41 +859,6 @@ function throttle(func, delay) {
 }
 
 
-function moveObjectsTowardsCenter() {
-  const center = {
-    x: width / 2,
-    y: height / 2
-  };
-
-  world.bodies.forEach((body) => {
-    if (!body.isStatic) {
-      if (isBodyInContactWithStatic(body)) {
-        const deltaX = center.x - body.position.x;
-        const deltaY = center.y - body.position.y;
-        const forceMagnitude = 0.002; // Adjust the force magnitude as per your requirement
-        Body.applyForce(body, body.position, {
-          x: deltaX * forceMagnitude,
-          y: deltaY * forceMagnitude
-        });
-      }
-    }
-  });
-  // Determine if a body is in contact with a static element
-  function isBodyInContactWithStatic(body) {
-
-    const staticElements = world.bodies.filter((element) => element.isStatic);
-
-    for (let i = 0; i < staticElements.length; i++) {
-      const collision = Collision.collides(body, staticElements[i]);
-      if (collision?.collided) {
-        console.log({ collision })
-        return true;
-      }
-    }
-
-    return false;
-  }
-}
 
 // -----------------
 // utils
@@ -746,7 +877,61 @@ function debounce(func, delay) {
 // discarded code
 // -----------------
 
-const randomHexColor = () => '#' + Math.floor(Math.random() * 16777215).toString(16);
+
+// function readjustObjects() {
+//   const bodies = world.bodies.filter((body) => !body.isStatic);
+//   bodies.forEach((body) => {
+//     const x = body.position.x;
+//     const y = body.position.y;
+//     console.log({ x, smallerMultiplyer })
+//     if (!isPortrait) {
+//       const newX = x * smallerMultiplyer;
+//       Body.setPosition(body, { x: newX, y });
+//     } else {
+//       const newY = y * smallerMultiplyer;
+//       Body.setPosition(body, { x, y: newY });
+//     }
+//     // Body.scale(body, smallerMultiplyer, smallerMultiplyer);
+//   });
+// }
+
+// function moveObjectsTowardsCenter() {
+//   const center = {
+//     x: width / 2,
+//     y: height / 2
+//   };
+
+//   world.bodies.forEach((body) => {
+//     if (!body.isStatic) {
+//       if (isBodyInContactWithStatic(body)) {
+//         const deltaX = center.x - body.position.x;
+//         const deltaY = center.y - body.position.y;
+//         const forceMagnitude = 0.002; // Adjust the force magnitude as per your requirement
+//         Body.applyForce(body, body.position, {
+//           x: deltaX * forceMagnitude,
+//           y: deltaY * forceMagnitude
+//         });
+//       }
+//     }
+//   });
+//   // Determine if a body is in contact with a static element
+//   function isBodyInContactWithStatic(body) {
+
+//     const staticElements = world.bodies.filter((element) => element.isStatic);
+
+//     for (let i = 0; i < staticElements.length; i++) {
+//       const collision = Collision.collides(body, staticElements[i]);
+//       if (collision?.collided) {
+//         console.log({ collision })
+//         return true;
+//       }
+//     }
+
+//     return false;
+//   }
+// }
+
+// const randomHexColor = () => '#' + Math.floor(Math.random() * 16777215).toString(16);
 
 // function rotateWalls() {
 //   console.log('rotateWalls');
