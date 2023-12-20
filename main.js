@@ -46,14 +46,14 @@ function init() {
   setDimensions()
   makeFruit()
   buildWorldEngine()
-  buildBubbleEngine()
+  // buildBubbleEngine()
   makeFrame(frameType)
   run()
   addFruit()
-  addBubble()
+  // addBubble()
   setInterval(() => {
     if (!isPaused) {
-      addBubble()
+      // addBubble()
       addFruit()
     }
   }, dropRate)
@@ -144,7 +144,7 @@ function makeFrame(FRAME) {
     default:
       makeSquareFrame()
   }
-  // drawFruits()
+  drawFruits()
 }
 
 function makeTriangleFrame() {
@@ -209,7 +209,7 @@ function makeSquareFrame() {
   })
 
   World.add(world, [leftWall, rightWall, ground]);
-  World.add(bubbleWorld, [leftWall, rightWall, topLine])
+  // World.add(bubbleWorld, [leftWall, rightWall, topLine])
 }
 
 
@@ -245,7 +245,7 @@ function drawFruits() {
 function run() {
   // Runner.run(engine);
   if (!isPaused) {
-    Engine.update(bubbleEngine, 1000 / 60); // update the engine
+    // Engine.update(bubbleEngine, 1000 / 60); // update the engine
     Engine.update(engine, 1000 / 60); // update the engine
   }
   requestAnimationFrame(run);
@@ -260,7 +260,7 @@ function addBubble() {
 function addFruit() {
   const index = Math.floor(Math.random() * pickVariety);
   const x = (Math.random() * (width - thick * 2 - maxRadius)) + thick + maxRadius / 2;
-  const y = -maxRadius;//thick + maxRadius;
+  const y = thick + maxRadius;
   // addBody(width / 2, height / 2, index)
   addBody(x, y, index)
 }
@@ -676,27 +676,27 @@ function playSound(index) {
 // event listeners
 // -----------------
 
-Events.on(bubbleEngine, 'collisionStart', (event) => {
-  for (let i = 0; i < event.pairs.length; i++) {
-    const bodyA = event.pairs[i].bodyA;
-    const bodyB = event.pairs[i].bodyB;
-    const collision = event.pairs[i].collision;
+// Events.on(bubbleEngine, 'collisionStart', (event) => {
+//   for (let i = 0; i < event.pairs.length; i++) {
+//     const bodyA = event.pairs[i].bodyA;
+//     const bodyB = event.pairs[i].bodyB;
+//     const collision = event.pairs[i].collision;
 
-    if (bodyA.index === bodyB.index) {
-      const index = bodyA.index;
-      World.remove(bubbleWorld, [bodyA, bodyB], true);
-      if (index !== fruits.length - 1) {
-        const { x, y } = collision.supports[0];
-        const combinedInertia = bodyA.inertia + bodyB.inertia;
-        addBubbleBody(x, y, index + 1, combinedInertia);
-        // addFlash(x, y)
-        // flashScreen(index)
-        break; // Exit the for loop
-      }
-    }
-  }
+//     if (bodyA.index === bodyB.index) {
+//       const index = bodyA.index;
+//       World.remove(bubbleWorld, [bodyA, bodyB], true);
+//       if (index !== fruits.length - 1) {
+//         const { x, y } = collision.supports[0];
+//         const combinedInertia = bodyA.inertia + bodyB.inertia;
+//         addBubbleBody(x, y, index + 1, combinedInertia);
+//         // addFlash(x, y)
+//         // flashScreen(index)
+//         break; // Exit the for loop
+//       }
+//     }
+//   }
 
-})
+// })
 
 Events.on(engine, "collisionStart", (event) => {
   // const filteredPairs = new Map();
