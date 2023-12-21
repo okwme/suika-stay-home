@@ -1,5 +1,5 @@
 const bubbles = []
-let frames = 0, isPaused = false
+let frames = 0, isPaused = false, air = 0, br, bg, bb//900000
 // requestAnimationFrame(addBubble)
 
 function addBubble() {
@@ -19,9 +19,7 @@ class Bubble {
       // r: random(120, 180),
       vector: createVector(random(-0.02, 0.02), random(-1.5, -2))
     };
-
     const { x, y, r, vector } = { ...defaults, ...options };
-
     this.x = x;
     this.y = y;
     this.r = r;
@@ -35,6 +33,9 @@ function setup() {
   let canvas = createCanvas(width, height);
   canvas.parent('p5'); // Attach canvas to div with id "p5"
   // frameRate(20)
+  br = random(100, 200) //200 / 2
+  bg = random(100, 200) // 200 / 2
+  bb = random(100, 200) // 200 / 2
 }
 
 
@@ -115,16 +116,47 @@ function radiusToVector(radius) {
   return -(radius * 5) / 100
 }
 
+
+function updateBg() {
+
+  const br_diff = random(-1, 1)
+  const bg_diff = random(-1, 1)
+  const bb_diff = random(-1, 1)
+  br = (br + br_diff) % 255
+  br = br < 0 ? 0 : br
+  bg = (bg + bg_diff) % 255
+  bg = bg < 0 ? 0 : bg
+  bb = (bb + bb_diff) % 255
+  bb = bb < 0 ? 0 : bb
+}
+
+let bgColors = ['darkred', 'DimGray', 'darkblue', 'black', 'darkgrey', 'lightgrey', 'lightblue']
+let bgColorIndex = 1
+let pops = []
 function draw() {
   if (isPaused) return
   // background('#607D8B')
   // background('rgb(90,105,110)')
   // background('rgb(180,180,180)')
-  background('white')
-  background('rgba(255, 255, 0, 0.2)')
-  background('lightgrey')
+
+  // background(bgColors[bgColorIndex - 1 < 0 ? bgColors.length - 1 : bgColorIndex - 1])
+
+
+
+  background(br, bg, bb)
+
+  const rectangleHeight = air / width
+  fill(bgColors[bgColorIndex])
+  noStroke()
+  rect(0, 0, width, rectangleHeight)
+
+  if (rectangleHeight >= height) {
+    bgColorIndex = (bgColorIndex + 1) % bgColors.length
+    air = 0
+  }
+
   frames++
-  if (frames % 10 === 0) {
+  if (frames % 8 === 0) {
     bubbles.push(new Bubble())
   }
   for (let i = bubbles.length - 1; i >= 0; i--) {
@@ -134,9 +166,12 @@ function draw() {
     if (bubble.x > width + bubble.r * 2 || bubble.x < 0 - bubble.r * 2) {
       // remove bubble
       bubbles.splice(i, 1)
-    } else if (bubble.y > height + bubble.r * 2 || bubble.y < 0 - bubble.r * 2) {
+    } else if (bubble.y < 0 + rectangleHeight + bubble.r / 2) {
       // remove bubble
       bubbles.splice(i, 1)
+      const area = bubble.r * bubble.r * PI
+      // air += area
+      // pops.push({ x: bubble.x, y: rectangleHeight, r: bubble.r, persist: 10 })
     } else {
       const deltaVector = random(-.03, .03)
       bubble.vector.x += deltaVector
@@ -158,24 +193,11 @@ function draw() {
           // r: (bigger(bubble.r, otherBubble.r) + smaller(bubble.r, otherBubble.r) / 2),
           vector: createVector((bubble.vector.x + otherBubble.vector.x) / 2, (bubble.vector.y + otherBubble.vector.y) / 2)//.normalize()
         }))
+        updateBg()
         break
       }
-
     }
 
-    function bigger(x, y) {
-      return x > y ? x : y
-    }
-    function smaller(x, y) {
-      return x < y ? x : y
-    }
-
-    const hexToRGBA = (hex, alpha) => {
-      const r = parseInt(hex.slice(1, 3), 16);
-      const g = parseInt(hex.slice(3, 5), 16);
-      const b = parseInt(hex.slice(5, 7), 16);
-      return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-    };
 
     // fill(hexToRGBA('#E1F5FE', 0.2)); // Very light blue in RGBA format
     fill('rgba(255,255,255,0.2)'); // Very light blue in RGBA format
@@ -200,6 +222,39 @@ function draw() {
     strokeWeight(bubble.r / 10)
     arc(bubble.x + bubble.r / 30, bubble.y + bubble.r / 15, bubble.r / 1.1, bubble.r / 1.1, PI + PI / 6, PI + PI / 2.5);
   }
+
+
+  for (let i = pops.length - 1; i >= 0; i--) {
+    let pop = pops[i]
+    if (pop.persist <= 0) {
+      pops.splice(i, 1)
+    } else {
+      pop.persist--
+      drawPop(pop.x, pop.y, pop.r)
+    }
+  }
   // background(random(255), random(255), random(255));
   // Add your drawing code here
+}
+
+
+function drawPop(x, y, radius) {
+  const n = 6; // Number of lines
+  const length = radius / 3; // Length of lines
+  stroke('white')
+  const angleIncrement = (2 * Math.PI) / n; // Angle increment between each line
+  strokeWeight(2)
+  for (let i = 0; i < n; i++) {
+    const angle = i * angleIncrement;
+    const startX = x + Math.cos(angle) * length / 2
+    const startY = y + Math.sin(angle) * length / 2
+    const endX = x + Math.cos(angle) * length;
+    const endY = y + Math.sin(angle) * length;
+
+    // Draw line from (x, y) to (endX, endY)
+    // ...
+    if (endY <= y) {
+      line(startX, startY, endX, endY)
+    }
+  }
 }

@@ -182,26 +182,26 @@ function makeTriangleFrame() {
 }
 
 function makeSquareFrame() {
-  const height_ = height
-  const width_ = width
-  const heightDiff = (height - height_) / 2
-  const widthDiff = (width - width_) / 2
-  const leftWall = Bodies.rectangle(widthDiff + thick / 2, height_ / 2, thick, height_, {
+  // const height_ = height
+  // const width_ = width
+  // const heightDiff = (height - height_) / 2
+  // const widthDiff = (width - width_) / 2
+  const leftWall = Bodies.rectangle(-thick / 2, height / 2, thick, height, {
     isStatic: true,
     render: { fillStyle: wallColor }
   });
 
-  const rightWall = Bodies.rectangle(widthDiff + width_ - thick / 2, height_ / 2, thick, height_, {
+  const rightWall = Bodies.rectangle(width + thick / 2, height / 2, thick, height, {
     isStatic: true,
     render: { fillStyle: wallColor }
   });
 
-  const ground = Bodies.rectangle(widthDiff + width_ / 2, height_ - thick / 2, width_, thick, {
+  const ground = Bodies.rectangle(width / 2, height + thick / 2, width, thick, {
     isStatic: true,
     render: { fillStyle: wallColor }
   });
 
-  const topLine = Bodies.rectangle(widthDiff + width_ / 2, thick / 2, width_, thick, {
+  const topLine = Bodies.rectangle(width / 2, thick / 2, width, thick, {
     name: "topLine",
     isStatic: true,
     // isSensor: true,
@@ -597,6 +597,7 @@ function addBody(x, y, index, inertia = 0) {
       lineWidth: 2 // Set the outline width
     },
   });
+  Body.scale(body, xScale, xScale);
   World.add(world, body);
   // console.timeEnd('addbody')
 }

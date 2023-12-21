@@ -40,31 +40,44 @@
         display: none;
       }
     
-          #video-background {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-          }
-        </style>
-      </head>
-      <body>
-        <script type="module" src="/main.js"></script>
-        <script src="/bubbles.js"></script>
-        <div id="p5"></div>
-        <div id="bubbles"></div>
-        <div id="suika"></div>
-        <div id="mute"></div>
-        <div id="video-background">
-          <!-- <iframe
-            width="100%"
-            height="100%"
-            src="https://www.youtube.com/embed/5zd6PsWx5E0?autoplay=1&mute=1&controls=0&loop=1&playlist=5zd6PsWx5E0"
-            frameborder="0"
-            allow="autoplay"
-            allowfullscreen></iframe> -->
-        </div>
+              #video-background {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                z-index: -1;
+              }
+            </style>
+          </head>
+          <body>
+            <script type="module" src="/main.js"></script>
+            <script src="/bubbles.js"></script>
+            
+            <div id="p5"></div>
+            <div id="bubbles"></div>
+            <div id="suika"></div>
+            <div id="mute"></div>
+            <div id="video-background">
+              <!-- <iframe
+                width="100%"
+                height="100%"
+                src="https://www.youtube.com/embed/5zd6PsWx5E0?autoplay=1&mute=1&controls=0&loop=1&playlist=5zd6PsWx5E0"
+                frameborder="0"
+                allow="autoplay"
+                allowfullscreen></iframe> -->
+            </div>
+            <audio src="/suika.mp3" autoplay loop></audio>
+            <script>
+              const timeArrivedInUnix = Date.now();
+
+          window.addEventListener("unload", (event) => {
+            console.log('unload')
+            const timeSinceArrivedInUnix = Date.now() - timeArrivedInUnix;
+            const prettyTime = new Date(timeSinceArrivedInUnix).toISOString().substr(11, 8);
+            console.log(`You stayed for ${prettyTime}`)
+
+          })
+          </script>
       </body>
     </html>
