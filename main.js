@@ -1,7 +1,7 @@
 import { Common, Constraint, Composite, Bodies, Engine, Body, Events, Collision, Render, World, Vertices, Svg } from "matter-js";
 
 // var clone = require('clone');
-import decomp from 'poly-decomp';
+// import decomp from 'poly-decomp';
 
 const variety = 10
 const pickVariety = 1
@@ -15,12 +15,12 @@ const dropRate = 200
 const maxRadius = pickVariety * radiusStep + radiusOffset
 const bgColor = 'rgba(0,0,0,0)'//randomHexColor()
 const wallColor = 'rgba(0,0,0,0)'//bgColor//'#999'//randomHexColor()
-var globalGroups = {}
-console.log({ globalGroups })
+// var globalGroups = {}
+// console.log({ globalGroups })
 const isSleeping = false, density = 0.01, friction = 0.1, frictionStatic = 0.5, slop = 0.0001, restitution = 0.2
 
 let loadedAudio, timeoutId, render, engine, world, width, height, smallerMultiplyer, isPortrait
-let bubbleRender, bubbleEngine, bubbleWorld
+// let bubbleRender, bubbleEngine, bubbleWorld
 let muted = false
 let currentlyPlaying = 0
 let isPaused = false;
@@ -48,6 +48,8 @@ function init() {
   buildWorldEngine()
   // buildBubbleEngine()
   makeFrame(frameType)
+  // drawFruits()
+  prePopulate()
   run()
   addFruit()
   // addBubble()
@@ -67,26 +69,6 @@ function makeFruit() {
   }
 }
 
-function buildBubbleEngine() {
-  bubbleEngine = Engine.create();
-  bubbleEngine.gravity.y = -1; // Set negative gravity on the y scale
-  bubbleRender = Render.create({
-    engine: bubbleEngine,
-    element: document.getElementById('bubbles'),
-    options: {
-      showCollisions: false,
-      wireframes: false,
-      debug: false,
-      background: bgColor,
-      width,
-      height,
-      // showIds: true,
-      // showSeparations: true,
-    }
-  });
-  bubbleWorld = bubbleEngine.world;
-  Render.run(bubbleRender);
-}
 
 function buildWorldEngine() {
   engine = Engine.create();
@@ -138,47 +120,12 @@ function makeFrame(FRAME) {
   World.remove(world, bodies);
   // const FRAME = FRAMES[index]
   switch (FRAME) {
-    case 'triangle':
-      makeTriangleFrame()
-      break
+    // case 'triangle':
+    //   makeTriangleFrame()
+    //   break
     default:
       makeSquareFrame()
   }
-  drawFruits()
-}
-
-function makeTriangleFrame() {
-  const leftVertices = [
-    { x: 0, y: thick }, { x: width / 2, y: height - thick }, { x: 0, y: height - thick }
-  ]
-  const center = Vertices.centre(leftVertices)
-  const leftWall = Bodies.fromVertices(center.x, center.y, leftVertices, {
-    isStatic: true,
-    render: { fillStyle: wallColor }
-  });
-
-  const rightVertices = [
-    { x: width / 2, y: height - thick }, { x: width, y: thick }, { x: width, y: height - thick }
-  ]
-  const rightCenter = Vertices.centre(rightVertices)
-  const rightWall = Bodies.fromVertices(rightCenter.x, rightCenter.y, rightVertices, {
-    isStatic: true,
-    render: { fillStyle: wallColor }
-  });
-
-  const ground = Bodies.rectangle(width / 2, height - thick / 2, width, thick, {
-    isStatic: true,
-    render: { fillStyle: wallColor }
-  });
-
-  const topLine = Bodies.rectangle(width / 2, thick / 2, width, thick, {
-    name: "topLine",
-    isStatic: true,
-    isSensor: true,
-    render: { fillStyle: wallColor }
-  })
-
-  World.add(world, [leftWall, rightWall, topLine]);
 }
 
 function makeSquareFrame() {
@@ -201,12 +148,12 @@ function makeSquareFrame() {
     render: { fillStyle: wallColor }
   });
 
-  const topLine = Bodies.rectangle(width / 2, thick / 2, width, thick, {
-    name: "topLine",
-    isStatic: true,
-    // isSensor: true,
-    render: { fillStyle: wallColor }
-  })
+  // const topLine = Bodies.rectangle(width / 2, thick / 2, width, thick, {
+  //   name: "topLine",
+  //   isStatic: true,
+  //   // isSensor: true,
+  //   render: { fillStyle: wallColor }
+  // })
 
   World.add(world, [leftWall, rightWall, ground]);
   // World.add(bubbleWorld, [leftWall, rightWall, topLine])
@@ -251,318 +198,12 @@ function run() {
   requestAnimationFrame(run);
 }
 
-function addBubble() {
-  const index = Math.floor(Math.random() * pickVariety);
+function addFruit(index) {
+  index = index || Math.floor(Math.random() * pickVariety);
   const x = (Math.random() * (width - thick * 2 - maxRadius)) + thick + maxRadius / 2;
-  const y = height - maxRadius
-  addBubbleBody(x, y, index)
-}
-function addFruit() {
-  const index = Math.floor(Math.random() * pickVariety);
-  const x = (Math.random() * (width - thick * 2 - maxRadius)) + thick + maxRadius / 2;
-  const y = thick + maxRadius;
+  const y = -(maxRadius + (Math.random() * maxRadius * 2))
   // addBody(width / 2, height / 2, index)
   addBody(x, y, index)
-}
-
-// var globalGroup = false
-// async function addFish(x, y, index) {
-//   if (globalGroup) {
-//     // const copiedGroup = Common.clone(globalGroup);
-//     const newClone = structuralClone(globalGroup)
-//     newClone.bodies.forEach((body) => {
-//       body.id = Common.nextId()
-//     })
-//     const currentLocation = newClone.bodies[0].position
-//     const deltaX = x - currentLocation.x
-//     const deltaY = y - currentLocation.y
-
-//     // Composite.setPosition(newClone, { x, y });
-//     Composite.translate(newClone, { x: deltaX, y: deltaY });
-//     Composite.add(world, newClone);
-//     return;
-//   }
-//   const response = await fetch('svg/goldfish.svg');
-//   const svgText = await response.text();
-//   const parser = new DOMParser();
-//   const svgDoc = parser.parseFromString(svgText, 'image/svg+xml');
-//   const svgPaths = svgDoc.getElementsByTagName('path');
-//   const vertices = [...svgPaths].map((path) => {
-//     const vertice = Svg.pathToVertices(path);
-//     return vertice
-//   })
-//   const body = Bodies.fromVertices(x, y, vertices, {
-//     isStatic: false,
-//     index: 9,
-//     render: {
-//       visible: false,
-//       sprite: {
-//         fillStyle: 'none',
-//         strokeStyle: 'none',
-//         lineWidth: 1,
-//         slop: 1,
-//         // texture: `svg/goldfish.png`,
-//         // xScale: 0.05,
-//         // yScale: 0.05
-//       }
-//     }
-//   }, true, false, undefined, true);
-//   const scaleBy = 0.21
-//   Body.scale(body, scaleBy, scaleBy);
-//   // Body.rotate(body, -0.02);
-//   let spriteHolder = Bodies.rectangle(
-//     body.bounds.min.x,
-//     body.bounds.min.y,
-//     (body.bounds.max.x - body.bounds.min.x),
-//     (body.bounds.max.y - body.bounds.min.y),
-//     {
-//       collisionFilter: {
-//         mask: 0
-//       },
-//       render: {
-//         // visible: false,
-//         fillStyle: 'none',
-//         strokeStyle: 'rgba(0,0,0,0)',
-//         sprite: {
-//           texture: `svg/goldfish.png`,
-//           xOffset: -0.02,
-//           yOffset: 0.04,
-//           xScale: scaleBy * 0.2476190476,
-//           yScale: scaleBy * 0.2476190476,
-//         }
-//       }
-//     }
-//   )
-//   let constraint = Constraint.create({
-//     bodyA: body,
-//     pointA: { x: 0, y: 100 },
-//     bodyB: spriteHolder,
-//     pointB: { x: 0, y: 100 },
-//     length: 0,
-//     stiffness: 1.1,
-//     render: {
-//       visible: false
-//     }
-//   })
-//   let constraint2 = Constraint.create({
-//     bodyA: body,
-//     pointA: { x: 0, y: -100 },
-//     bodyB: spriteHolder,
-//     pointB: { x: 0, y: -100 },
-//     length: 0,
-//     stiffness: 1.1,
-//     render: {
-//       visible: false
-//     }
-//   })
-//   let group = Composite.create({ label: `group` })
-//   // Body.scale(group, 0.2, 0.2);
-//   Composite.add(group, [body, spriteHolder, constraint, constraint2])
-//   Composite.add(world, group)
-//   globalGroup = structuralClone(group)
-
-//   // body.parts.forEach((part, i) => {
-//   //   if (i == 0) return
-//   //   part.sprite = null
-//   // })
-//   // console.log({ body })
-//   // World.add(world, body);
-//   // return group
-// }
-// function structuralClone(obj, index) {
-//   console.time('structuralClone')
-//   // const cl = new Notification('', { data: obj, silent: true }).data;
-//   // const cl = JSON.parse(JSON.stringify(obj));
-//   // const cl = Object.create(Object.getPrototypeOf(obj));
-//   const cl = Common.clone(obj, true);
-//   console.log(index)
-
-//   console.timeEnd('structuralClone')
-//   return cl;
-// }
-function structuralClone(obj, index) {
-  const sizeInBytes = getObjectSize(obj);
-  console.log(index, { sizeInBytes })
-  console.time('structuralClone')
-  const oldState = history.state;
-  history.replaceState(obj, document.title);
-  const copy = history.state;
-  history.replaceState(oldState, document.title);
-  console.log({ index })
-  console.timeEnd('structuralClone')
-  return copy;
-}
-function getObjectSize(obj, visited = new Set()) {
-  let size = 0;
-
-  for (const key in obj) {
-    if (obj.hasOwnProperty(key)) {
-      size += key.length * 2; // 2 bytes per character
-      const value = obj[key];
-      if (typeof value === 'object' && value !== null && !visited.has(value)) {
-        visited.add(value);
-        size += getObjectSize(value, visited);
-      } else {
-        size += String(value).length * 2;
-      }
-    }
-  }
-
-  return size;
-}
-
-
-
-async function addCustomSVG(x, y, index) {
-  if (globalGroups.hasOwnProperty(index)) {
-    // const copiedGroup = Common.clone(globalGroup);
-    const newClone = structuralClone(globalGroups[index], index)
-    console.time('addCustomSVG-indexed')
-    // TODO: confirm this is necessary
-    newClone.bodies.forEach((body) => {
-      body.id = Common.nextId()
-    })
-    const currentLocation = newClone.bodies[0].position
-    const deltaX = x - currentLocation.x
-    const deltaY = y - currentLocation.y
-    // Composite.setPosition(newClone, { x, y });
-    Composite.translate(newClone, { x: deltaX, y: deltaY });
-    Composite.add(world, newClone);
-    console.timeEnd('addCustomSVG-indexed')
-    return;
-  }
-  console.time('addCustomSVG')
-  const response = await fetch(`shapes/${index + 1}.svg`);
-  const svgText = await response.text();
-
-  const parser = new DOMParser();
-  const svgDoc = parser.parseFromString(svgText, 'image/svg+xml');
-
-  const svgPaths = svgDoc.getElementsByTagName('path');
-
-  const vertices = [...svgPaths].map((path) => {
-    const vertice = Svg.pathToVertices(path, 1).filter(
-      (v, index, self) =>
-        index === self.findIndex((s) => ~~s.x === ~~v.x && ~~s.y === ~~v.y)
-    );
-    return vertice
-  })
-
-  const radius = 2 * (index * radiusStep + radiusOffset);
-  // const radius = 2 * (3 * radiusStep + radiusOffset);
-  const startingRadius = 200
-
-  const scaleBy = radius / startingRadius
-
-  const body = Bodies.fromVertices(x, y, vertices, {
-    index: index,
-    density: 0.01, // 0.001
-    friction: 0.1, // 0.1
-    frictionStatic: 0.5, // 0.5
-    slop: 0.0001, // 0.05 // boundary tolerance
-    restitution: 0.2,
-    render: {
-      visible: true, // TODO: change this
-      sprite: {
-        fillStyle: 'none',
-        strokeStyle: 'none',
-        lineWidth: 1,
-        slop: 1,
-        // texture: `fin/${index + 1}.png`,
-        xScale: 1,
-        yScale: 1
-      }
-    }
-  }, true, false, undefined, true);
-
-  Body.scale(body, scaleBy, scaleBy);
-
-  let group = Composite.create({ label: `group` })
-  Composite.add(group, [body])
-  Composite.add(world, group);
-  console.timeEnd('addCustomSVG')
-  if (!globalGroups.hasOwnProperty(index)) {
-    globalGroups[index] = structuralClone(group, index)
-  }
-
-  // // TODO: check this
-  // const scaleBy = 0.9
-  // Body.scale(body, scaleBy, scaleBy);
-  // // Body.rotate(body, -0.02);
-  // let spriteHolder = Bodies.rectangle(
-  //   body.bounds.min.x,
-  //   body.bounds.min.y,
-  //   (body.bounds.max.x - body.bounds.min.x),
-  //   (body.bounds.max.y - body.bounds.min.y),
-  //   {
-  //     collisionFilter: {
-  //       mask: 0
-  //     },
-  //     render: {
-  //       // visible: false,
-  //       fillStyle: 'none',
-  //       strokeStyle: 'rgba(0,0,0,0)',
-  //       sprite: {
-  //         texture: `fin/${index + 1}.png`,
-  //         xOffset: 0,//-0.02,
-  //         yOffset: 0,//0.04,
-  //         xScale: 1, //scaleBy * 0.2476190476,
-  //         yScale: 1, //scaleBy * 0.2476190476,
-  //       }
-  //     }
-  //   }
-  // )
-  // let constraint = Constraint.create({
-  //   bodyA: body,
-  //   pointA: { x: 0, y: 100 },
-  //   bodyB: spriteHolder,
-  //   pointB: { x: 0, y: 100 },
-  //   length: 0,
-  //   stiffness: 1.1,
-  //   render: {
-  //     // visible: false
-  //   }
-  // })
-  // let constraint2 = Constraint.create({
-  //   bodyA: body,
-  //   pointA: { x: 0, y: -100 },
-  //   bodyB: spriteHolder,
-  //   pointB: { x: 0, y: -100 },
-  //   length: 0,
-  //   stiffness: 1.1,
-  //   render: {
-  //     // visible: false
-  //   }
-  // })
-  // let group = Composite.create({ label: `group` })
-  // // Body.scale(group, 0.2, 0.2);
-  // Composite.add(group, [body, spriteHolder, constraint, constraint2])
-  // Composite.add(world, group)
-  // globalGroups[index] = structuralClone(group)
-}
-
-// addFish(width / 2, height / 2)
-
-function addBubbleBody(x, y, index, inertia = 0) {
-  const radius = 30 + (index * 10)
-  const body = Bodies.circle(x, y, radius, {
-    index,
-    isSleeping,
-    density, // 0.001
-    friction, // 0.1
-    frictionStatic, // 0.5
-    // mass: 1, // function of density and area
-    slop, // 0.05 // boundary tolerance
-    inertia,
-    restitution,
-    render: {
-      fillStyle: 'rgba(255,255,255, 0.5)', // Set the fillStyle to the color
-      strokeStyle: 'rgba(255,255,255,0.5)',
-      lineWidth: 0.5 // Set the outline width
-    }
-  })
-  World.add(bubbleWorld, body);
-
 }
 
 function addBody(x, y, index, inertia = 0) {
@@ -672,32 +313,70 @@ function playSound(index) {
   }
 }
 
+function prePopulate() {
+
+
+
+  const arr = [];
+
+  for (let i = 0; i < 10; i++) {
+    arr.push(...Array(10).fill(0));
+    if (i > 0) {
+      arr.push(...Array(9).fill(1))
+      if (i > 1) {
+        arr.push(...Array(8).fill(2))
+        if (i > 2) {
+          arr.push(...Array(7).fill(3))
+          if (i > 3) {
+            arr.push(...Array(6).fill(4))
+            if (i > 4) {
+              arr.push(...Array(5).fill(5))
+              if (i > 5) {
+                arr.push(...Array(4).fill(6))
+                if (i > 6) {
+                  arr.push(...Array(3).fill(7))
+                  if (i > 7) {
+                    arr.push(...Array(2).fill(8))
+                    if (i > 8) {
+                      arr.push(...Array(1).fill(9))
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  const area = width * height;
+  console.log({ area })
+  let addedArea = 0
+  let i = 0
+  let picks = []
+  while (addedArea < area * .8) {
+    i = weightedRandom()//i % variety
+    picks.push(i)
+    const x = (Math.random() * (width - thick * 2 - maxRadius)) + thick + maxRadius / 2;
+    const y = (Math.random() * (height - thick * 2 - maxRadius)) + thick + maxRadius / 2;
+    addBody(x, y, i)
+    const radius = fruits[i].radius
+    const add = Math.PI * Math.pow(radius, 2)
+    // console.log({ radius, add })
+    addedArea += add
+    // i++
+  }
+  console.log({ picks })
+  function weightedRandom() {
+    return arr[Math.floor(Math.random() * arr.length)];
+  }
+}
+
 
 // -----------------
 // event listeners
 // -----------------
 
-// Events.on(bubbleEngine, 'collisionStart', (event) => {
-//   for (let i = 0; i < event.pairs.length; i++) {
-//     const bodyA = event.pairs[i].bodyA;
-//     const bodyB = event.pairs[i].bodyB;
-//     const collision = event.pairs[i].collision;
-
-//     if (bodyA.index === bodyB.index) {
-//       const index = bodyA.index;
-//       World.remove(bubbleWorld, [bodyA, bodyB], true);
-//       if (index !== fruits.length - 1) {
-//         const { x, y } = collision.supports[0];
-//         const combinedInertia = bodyA.inertia + bodyB.inertia;
-//         addBubbleBody(x, y, index + 1, combinedInertia);
-//         // addFlash(x, y)
-//         // flashScreen(index)
-//         break; // Exit the for loop
-//       }
-//     }
-//   }
-
-// })
 
 Events.on(engine, "collisionStart", (event) => {
   // const filteredPairs = new Map();
@@ -739,63 +418,6 @@ Events.on(engine, "collisionStart", (event) => {
 });
 
 
-function addFlash(x, y) {
-  const angle = Math.PI / 5; // Angle between each point of the star
-  const radiusOuter = 50; // Outer radius of the star
-  const radiusInner = 30; // Inner radius of the star
-
-  const starVertices = [];
-  for (let i = 0; i < 9; i++) {
-    const radius = i % 2 === 0 ? radiusOuter : radiusInner;
-    const currAngle = i * angle;
-    const vertexX = x + radius * Math.cos(currAngle);
-    const vertexY = y + radius * Math.sin(currAngle);
-    starVertices.push({ x: vertexX, y: vertexY });
-  }
-
-  const staticElement = Bodies.fromVertices(x, y, [starVertices], {
-    isStatic: true,
-    render: { fillStyle: 'yellow' }
-  });
-  World.add(world, staticElement);
-
-  setTimeout(() => {
-    World.remove(world, staticElement);
-  }, 200);
-}
-
-
-let flashes = 0
-function convertToRGBA(index) {
-
-}
-
-function flashScreen(index) {
-  flashes++
-  console.log({ flashes })
-  const backgroundElement = document.createElement('div');
-  backgroundElement.style.position = 'fixed';
-  backgroundElement.style.top = '0';
-  backgroundElement.style.left = '0';
-  backgroundElement.style.width = '100%';
-  backgroundElement.style.height = '100%';
-  // backgroundElement.style.backgroundColor = 'rgba(255,0,0,0.2)';
-  console.log(convertToRGBA(index))
-  backgroundElement.style.backgroundColor = convertToRGBA(index);
-  backgroundElement.style.opacity = '1';
-  backgroundElement.style.transition = 'opacity 200ms';
-  backgroundElement.style.zIndex = '-1';
-
-  document.body.appendChild(backgroundElement);
-
-  setTimeout(() => {
-    backgroundElement.style.opacity = '0';
-    setTimeout(() => {
-      flashes--
-      backgroundElement.remove();
-    }, 200);
-  }, 0);
-}
 let wasPaused = false
 document.addEventListener('visibilitychange', () => {
   console.log('visibility changed')
@@ -1064,3 +686,452 @@ function debounce(func, delay) {
 // engine.gravity.x = 0;
 
 // let colors = []    
+
+// function buildBubbleEngine() {
+//   bubbleEngine = Engine.create();
+//   bubbleEngine.gravity.y = -1; // Set negative gravity on the y scale
+//   bubbleRender = Render.create({
+//     engine: bubbleEngine,
+//     element: document.getElementById('bubbles'),
+//     options: {
+//       showCollisions: false,
+//       wireframes: false,
+//       debug: false,
+//       background: bgColor,
+//       width,
+//       height,
+//       // showIds: true,
+//       // showSeparations: true,
+//     }
+//   });
+//   bubbleWorld = bubbleEngine.world;
+//   Render.run(bubbleRender);
+// }
+
+
+// Events.on(bubbleEngine, 'collisionStart', (event) => {
+//   for (let i = 0; i < event.pairs.length; i++) {
+//     const bodyA = event.pairs[i].bodyA;
+//     const bodyB = event.pairs[i].bodyB;
+//     const collision = event.pairs[i].collision;
+
+//     if (bodyA.index === bodyB.index) {
+//       const index = bodyA.index;
+//       World.remove(bubbleWorld, [bodyA, bodyB], true);
+//       if (index !== fruits.length - 1) {
+//         const { x, y } = collision.supports[0];
+//         const combinedInertia = bodyA.inertia + bodyB.inertia;
+//         addBubbleBody(x, y, index + 1, combinedInertia);
+//         // addFlash(x, y)
+//         // flashScreen(index)
+//         break; // Exit the for loop
+//       }
+//     }
+//   }
+
+// })
+
+
+// async function addCustomSVG(x, y, index) {
+//   if (globalGroups.hasOwnProperty(index)) {
+//     // const copiedGroup = Common.clone(globalGroup);
+//     const newClone = structuralClone(globalGroups[index], index)
+//     console.time('addCustomSVG-indexed')
+//     // TODO: confirm this is necessary
+//     newClone.bodies.forEach((body) => {
+//       body.id = Common.nextId()
+//     })
+//     const currentLocation = newClone.bodies[0].position
+//     const deltaX = x - currentLocation.x
+//     const deltaY = y - currentLocation.y
+//     // Composite.setPosition(newClone, { x, y });
+//     Composite.translate(newClone, { x: deltaX, y: deltaY });
+//     Composite.add(world, newClone);
+//     console.timeEnd('addCustomSVG-indexed')
+//     return;
+//   }
+//   console.time('addCustomSVG')
+//   const response = await fetch(`shapes/${index + 1}.svg`);
+//   const svgText = await response.text();
+
+//   const parser = new DOMParser();
+//   const svgDoc = parser.parseFromString(svgText, 'image/svg+xml');
+
+//   const svgPaths = svgDoc.getElementsByTagName('path');
+
+//   const vertices = [...svgPaths].map((path) => {
+//     const vertice = Svg.pathToVertices(path, 1).filter(
+//       (v, index, self) =>
+//         index === self.findIndex((s) => ~~s.x === ~~v.x && ~~s.y === ~~v.y)
+//     );
+//     return vertice
+//   })
+
+//   const radius = 2 * (index * radiusStep + radiusOffset);
+//   // const radius = 2 * (3 * radiusStep + radiusOffset);
+//   const startingRadius = 200
+
+//   const scaleBy = radius / startingRadius
+
+//   const body = Bodies.fromVertices(x, y, vertices, {
+//     index: index,
+//     density: 0.01, // 0.001
+//     friction: 0.1, // 0.1
+//     frictionStatic: 0.5, // 0.5
+//     slop: 0.0001, // 0.05 // boundary tolerance
+//     restitution: 0.2,
+//     render: {
+//       visible: true, // TODO: change this
+//       sprite: {
+//         fillStyle: 'none',
+//         strokeStyle: 'none',
+//         lineWidth: 1,
+//         slop: 1,
+//         // texture: `fin/${index + 1}.png`,
+//         xScale: 1,
+//         yScale: 1
+//       }
+//     }
+//   }, true, false, undefined, true);
+
+//   Body.scale(body, scaleBy, scaleBy);
+
+//   let group = Composite.create({ label: `group` })
+//   Composite.add(group, [body])
+//   Composite.add(world, group);
+//   console.timeEnd('addCustomSVG')
+//   if (!globalGroups.hasOwnProperty(index)) {
+//     globalGroups[index] = structuralClone(group, index)
+//   }
+
+//   // // TODO: check this
+//   // const scaleBy = 0.9
+//   // Body.scale(body, scaleBy, scaleBy);
+//   // // Body.rotate(body, -0.02);
+//   // let spriteHolder = Bodies.rectangle(
+//   //   body.bounds.min.x,
+//   //   body.bounds.min.y,
+//   //   (body.bounds.max.x - body.bounds.min.x),
+//   //   (body.bounds.max.y - body.bounds.min.y),
+//   //   {
+//   //     collisionFilter: {
+//   //       mask: 0
+//   //     },
+//   //     render: {
+//   //       // visible: false,
+//   //       fillStyle: 'none',
+//   //       strokeStyle: 'rgba(0,0,0,0)',
+//   //       sprite: {
+//   //         texture: `fin/${index + 1}.png`,
+//   //         xOffset: 0,//-0.02,
+//   //         yOffset: 0,//0.04,
+//   //         xScale: 1, //scaleBy * 0.2476190476,
+//   //         yScale: 1, //scaleBy * 0.2476190476,
+//   //       }
+//   //     }
+//   //   }
+//   // )
+//   // let constraint = Constraint.create({
+//   //   bodyA: body,
+//   //   pointA: { x: 0, y: 100 },
+//   //   bodyB: spriteHolder,
+//   //   pointB: { x: 0, y: 100 },
+//   //   length: 0,
+//   //   stiffness: 1.1,
+//   //   render: {
+//   //     // visible: false
+//   //   }
+//   // })
+//   // let constraint2 = Constraint.create({
+//   //   bodyA: body,
+//   //   pointA: { x: 0, y: -100 },
+//   //   bodyB: spriteHolder,
+//   //   pointB: { x: 0, y: -100 },
+//   //   length: 0,
+//   //   stiffness: 1.1,
+//   //   render: {
+//   //     // visible: false
+//   //   }
+//   // })
+//   // let group = Composite.create({ label: `group` })
+//   // // Body.scale(group, 0.2, 0.2);
+//   // Composite.add(group, [body, spriteHolder, constraint, constraint2])
+//   // Composite.add(world, group)
+//   // globalGroups[index] = structuralClone(group)
+// }
+
+// // addFish(width / 2, height / 2)
+
+
+// function addBubbleBody(x, y, index, inertia = 0) {
+//   const radius = 30 + (index * 10)
+//   const body = Bodies.circle(x, y, radius, {
+//     index,
+//     isSleeping,
+//     density, // 0.001
+//     friction, // 0.1
+//     frictionStatic, // 0.5
+//     // mass: 1, // function of density and area
+//     slop, // 0.05 // boundary tolerance
+//     inertia,
+//     restitution,
+//     render: {
+//       fillStyle: 'rgba(255,255,255, 0.5)', // Set the fillStyle to the color
+//       strokeStyle: 'rgba(255,255,255,0.5)',
+//       lineWidth: 0.5 // Set the outline width
+//     }
+//   })
+//   World.add(bubbleWorld, body);
+
+// }
+
+
+// function addBubble() {
+//   const index = Math.floor(Math.random() * pickVariety);
+//   const x = (Math.random() * (width - thick * 2 - maxRadius)) + thick + maxRadius / 2;
+//   const y = height - maxRadius
+//   addBubbleBody(x, y, index)
+// }
+
+
+// function makeTriangleFrame() {
+//   const leftVertices = [
+//     { x: 0, y: thick }, { x: width / 2, y: height - thick }, { x: 0, y: height - thick }
+//   ]
+//   const center = Vertices.centre(leftVertices)
+//   const leftWall = Bodies.fromVertices(center.x, center.y, leftVertices, {
+//     isStatic: true,
+//     render: { fillStyle: wallColor }
+//   });
+
+//   const rightVertices = [
+//     { x: width / 2, y: height - thick }, { x: width, y: thick }, { x: width, y: height - thick }
+//   ]
+//   const rightCenter = Vertices.centre(rightVertices)
+//   const rightWall = Bodies.fromVertices(rightCenter.x, rightCenter.y, rightVertices, {
+//     isStatic: true,
+//     render: { fillStyle: wallColor }
+//   });
+
+//   const ground = Bodies.rectangle(width / 2, height - thick / 2, width, thick, {
+//     isStatic: true,
+//     render: { fillStyle: wallColor }
+//   });
+
+//   const topLine = Bodies.rectangle(width / 2, thick / 2, width, thick, {
+//     name: "topLine",
+//     isStatic: true,
+//     isSensor: true,
+//     render: { fillStyle: wallColor }
+//   })
+
+//   World.add(world, [leftWall, rightWall, topLine]);
+// }
+
+
+
+// var globalGroup = false
+// async function addFish(x, y, index) {
+//   if (globalGroup) {
+//     // const copiedGroup = Common.clone(globalGroup);
+//     const newClone = structuralClone(globalGroup)
+//     newClone.bodies.forEach((body) => {
+//       body.id = Common.nextId()
+//     })
+//     const currentLocation = newClone.bodies[0].position
+//     const deltaX = x - currentLocation.x
+//     const deltaY = y - currentLocation.y
+
+//     // Composite.setPosition(newClone, { x, y });
+//     Composite.translate(newClone, { x: deltaX, y: deltaY });
+//     Composite.add(world, newClone);
+//     return;
+//   }
+//   const response = await fetch('svg/goldfish.svg');
+//   const svgText = await response.text();
+//   const parser = new DOMParser();
+//   const svgDoc = parser.parseFromString(svgText, 'image/svg+xml');
+//   const svgPaths = svgDoc.getElementsByTagName('path');
+//   const vertices = [...svgPaths].map((path) => {
+//     const vertice = Svg.pathToVertices(path);
+//     return vertice
+//   })
+//   const body = Bodies.fromVertices(x, y, vertices, {
+//     isStatic: false,
+//     index: 9,
+//     render: {
+//       visible: false,
+//       sprite: {
+//         fillStyle: 'none',
+//         strokeStyle: 'none',
+//         lineWidth: 1,
+//         slop: 1,
+//         // texture: `svg/goldfish.png`,
+//         // xScale: 0.05,
+//         // yScale: 0.05
+//       }
+//     }
+//   }, true, false, undefined, true);
+//   const scaleBy = 0.21
+//   Body.scale(body, scaleBy, scaleBy);
+//   // Body.rotate(body, -0.02);
+//   let spriteHolder = Bodies.rectangle(
+//     body.bounds.min.x,
+//     body.bounds.min.y,
+//     (body.bounds.max.x - body.bounds.min.x),
+//     (body.bounds.max.y - body.bounds.min.y),
+//     {
+//       collisionFilter: {
+//         mask: 0
+//       },
+//       render: {
+//         // visible: false,
+//         fillStyle: 'none',
+//         strokeStyle: 'rgba(0,0,0,0)',
+//         sprite: {
+//           texture: `svg/goldfish.png`,
+//           xOffset: -0.02,
+//           yOffset: 0.04,
+//           xScale: scaleBy * 0.2476190476,
+//           yScale: scaleBy * 0.2476190476,
+//         }
+//       }
+//     }
+//   )
+//   let constraint = Constraint.create({
+//     bodyA: body,
+//     pointA: { x: 0, y: 100 },
+//     bodyB: spriteHolder,
+//     pointB: { x: 0, y: 100 },
+//     length: 0,
+//     stiffness: 1.1,
+//     render: {
+//       visible: false
+//     }
+//   })
+//   let constraint2 = Constraint.create({
+//     bodyA: body,
+//     pointA: { x: 0, y: -100 },
+//     bodyB: spriteHolder,
+//     pointB: { x: 0, y: -100 },
+//     length: 0,
+//     stiffness: 1.1,
+//     render: {
+//       visible: false
+//     }
+//   })
+//   let group = Composite.create({ label: `group` })
+//   // Body.scale(group, 0.2, 0.2);
+//   Composite.add(group, [body, spriteHolder, constraint, constraint2])
+//   Composite.add(world, group)
+//   globalGroup = structuralClone(group)
+
+//   // body.parts.forEach((part, i) => {
+//   //   if (i == 0) return
+//   //   part.sprite = null
+//   // })
+//   // console.log({ body })
+//   // World.add(world, body);
+//   // return group
+// }
+// function structuralClone(obj, index) {
+//   console.time('structuralClone')
+//   // const cl = new Notification('', { data: obj, silent: true }).data;
+//   // const cl = JSON.parse(JSON.stringify(obj));
+//   // const cl = Object.create(Object.getPrototypeOf(obj));
+//   const cl = Common.clone(obj, true);
+//   console.log(index)
+
+//   console.timeEnd('structuralClone')
+//   return cl;
+// }
+// function structuralClone(obj, index) {
+//   const sizeInBytes = getObjectSize(obj);
+//   console.log(index, { sizeInBytes })
+//   console.time('structuralClone')
+//   const oldState = history.state;
+//   history.replaceState(obj, document.title);
+//   const copy = history.state;
+//   history.replaceState(oldState, document.title);
+//   console.log({ index })
+//   console.timeEnd('structuralClone')
+//   return copy;
+// }
+// function getObjectSize(obj, visited = new Set()) {
+//   let size = 0;
+
+//   for (const key in obj) {
+//     if (obj.hasOwnProperty(key)) {
+//       size += key.length * 2; // 2 bytes per character
+//       const value = obj[key];
+//       if (typeof value === 'object' && value !== null && !visited.has(value)) {
+//         visited.add(value);
+//         size += getObjectSize(value, visited);
+//       } else {
+//         size += String(value).length * 2;
+//       }
+//     }
+//   }
+
+//   return size;
+// }
+
+
+
+// function addFlash(x, y) {
+//   const angle = Math.PI / 5; // Angle between each point of the star
+//   const radiusOuter = 50; // Outer radius of the star
+//   const radiusInner = 30; // Inner radius of the star
+
+//   const starVertices = [];
+//   for (let i = 0; i < 9; i++) {
+//     const radius = i % 2 === 0 ? radiusOuter : radiusInner;
+//     const currAngle = i * angle;
+//     const vertexX = x + radius * Math.cos(currAngle);
+//     const vertexY = y + radius * Math.sin(currAngle);
+//     starVertices.push({ x: vertexX, y: vertexY });
+//   }
+
+//   const staticElement = Bodies.fromVertices(x, y, [starVertices], {
+//     isStatic: true,
+//     render: { fillStyle: 'yellow' }
+//   });
+//   World.add(world, staticElement);
+
+//   setTimeout(() => {
+//     World.remove(world, staticElement);
+//   }, 200);
+// }
+
+
+// let flashes = 0
+// function convertToRGBA(index) {
+
+// }
+
+// function flashScreen(index) {
+//   flashes++
+//   console.log({ flashes })
+//   const backgroundElement = document.createElement('div');
+//   backgroundElement.style.position = 'fixed';
+//   backgroundElement.style.top = '0';
+//   backgroundElement.style.left = '0';
+//   backgroundElement.style.width = '100%';
+//   backgroundElement.style.height = '100%';
+//   // backgroundElement.style.backgroundColor = 'rgba(255,0,0,0.2)';
+//   console.log(convertToRGBA(index))
+//   backgroundElement.style.backgroundColor = convertToRGBA(index);
+//   backgroundElement.style.opacity = '1';
+//   backgroundElement.style.transition = 'opacity 200ms';
+//   backgroundElement.style.zIndex = '-1';
+
+//   document.body.appendChild(backgroundElement);
+
+//   setTimeout(() => {
+//     backgroundElement.style.opacity = '0';
+//     setTimeout(() => {
+//       flashes--
+//       backgroundElement.remove();
+//     }, 200);
+//   }, 0);
+// }
