@@ -239,6 +239,7 @@ function addBody(x, y, index, inertia = 0) {
 
 function mute() {
   muted = !muted
+  sound.volume(muted ? 0 : 0.3)
   document.getElementById('mute').toggleAttribute('muted')
 }
 
