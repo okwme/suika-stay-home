@@ -12,8 +12,8 @@ const bgColor = 'rgba(0,0,0,0)'
 const wallColor = 'rgba(0,0,0,0)'
 const isSleeping = false, density = 0.01, friction = 0.1, frictionStatic = 0.5, slop = 0.0001, restitution = 0.2
 const Engine = Matter.Engine, Render = Matter.Render, World = Matter.World, Bodies = Matter.Bodies, Events = Matter.Events
-let loadedAudio, timeoutId, render, engine, world, width, height, smallerMultiplyer, isPortrait
-let muted = false, isPaused = false, wasPaused = false
+let timeoutId, render, engine, world, width, height, smallerMultiplyer, isPortrait, sound
+let muted = true, isPaused = false, wasPaused = false
 let fruits = [], pics = [], combos = []
 
 const description = `Suika Stay Home is...`
@@ -29,11 +29,7 @@ init()
 // -----------------
 function init() {
   resetTimeout();
-  fetch(soundUrl)
-    .then((response) => response.blob())
-    .then((blob) => {
-      loadedAudio = URL.createObjectURL(blob);
-    });
+  loadSound();
   setDimensions()
   makePics()
   makeFruit()
@@ -57,6 +53,22 @@ function init() {
 function resetTimeout() {
   clearTimeout(timeoutId);
   timeoutId = setTimeout(hideMuteElement, 3000);
+}
+
+function loadSound() {
+  sound = new Howl({
+    src: [soundUrl],
+    sprite: {
+      0: [1570, 2250],
+      1: [2914, 3450],
+      2: [4213, 4787],
+      3: [5557, 6222],
+      4: [6781, 7400],
+      5: [8775, 9000],
+      6: [9700, 10100]
+    },
+    volume: 0.3,
+  });
 }
 
 function setDimensions() {
@@ -242,44 +254,12 @@ function showMuteElement() {
 
 function playSound(index) {
   if (muted) return
-  const soundRanges = [
-    [1.570, 2.250],
-    [2.914, 3.450],
-    [4.213, 4.787],
-    [5.557, 6.222],
-    [6.781, 7.400],
-    [8.775, 9],
-    [9.7, 10.1]
-  ];
-  let sound = new Audio(loadedAudio);
-  index = index % soundRanges.length;
-  const [start, end] = soundRanges[index];
-  const nowMilliseconds = new Date().getTime();
+  index = index % 7
   const volume = (index + 1) / 10;
-  sound.volume = volume;
-  sound.currentTime = start;
-  function onPlay() {
-    const newNowMilliseconds = new Date().getTime();
-    const timeToPlay = newNowMilliseconds - nowMilliseconds;
-    if (timeToPlay > 200) {
-      sound.pause();
-      setTimeout(() => {
-        sound = null;
-      }, 150);
-    } else {
-      setTimeout(() => {
-        sound.pause();
-        setTimeout(() => {
-          sound = null;
-        }, 150);
-      }, Math.floor((end - start) * 1000));
-    }
-    sound.removeEventListener('playing', onPlay);
-  }
-  sound.addEventListener('playing', onPlay);
-  sound.play().catch(() => {
-    mute();
-  });
+
+  const id = sound.play(index.toString())
+  // Howler.volume(volume, id)
+
 }
 
 // -----------------
