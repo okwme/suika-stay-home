@@ -3,7 +3,7 @@ const variety = 10
 const prizeSize = 27
 const radiusOffset = 40;
 const radiusStep = 10;
-const soundUrl = "/public/pop.wav";
+const soundUrl = "public/pop.wav";
 const max = 1000
 const thick = 50
 const dropRate = 200
@@ -198,9 +198,7 @@ function addBody(x, y, index, inertia = 0) {
   if (index < 8) {
     filename = `coin_${pics[index]}.png`
   } else {
-    console.log(hl.token.id)
     const combo = combos[hl.token.id - 1]
-    console.log({ combo })
     const comboIndex = combo[index - 8]
     filename = `prize_${comboIndex}.png`
   }
@@ -216,7 +214,7 @@ function addBody(x, y, index, inertia = 0) {
     restitution,
     render: {
       sprite: {
-        texture: `/public/fin/${filename}`,
+        texture: `public/fin/${filename}`,
       }
     },
   });
