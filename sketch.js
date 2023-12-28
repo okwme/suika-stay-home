@@ -27,7 +27,6 @@ async function init() {
   makeFruit()
   buildWorldEngine()
   resize()
-  prePopulate()
   if (hl.context.previewMode) {
     prePopulate()
     setTimeout(() => {
