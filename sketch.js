@@ -5,10 +5,9 @@ const soundUrl = "public/pop.";
 const isSleeping = false, density = 0.01, friction = 0.1, frictionStatic = 0.5, slop = 0.0001, restitution = 0.2
 const Engine = Matter.Engine, Render = Matter.Render, World = Matter.World, Bodies = Matter.Bodies, Events = Matter.Events, Body = Matter.Body;
 let timeoutId, render, engine, world, width, height, smallerMultiplyer, isPortrait, sound
-let muted = true, isPaused = false, wasPaused = false, currentlyPlaying = 0, playLimit = 8
+let muted = true, isPaused = false, wasPaused = false, currentlyPlaying = 0, playLimit = 5
 let fruits = [], pics = [], combos = []
 let filenames = ["aceofspades.svg", "apple.svg", "basketball.svg", "clover.svg", "coke.svg", "dice.svg", "eightball.svg", "fish.svg", "flower1.svg", "flower2.svg", "frog.svg", "golfball.svg", "hamburger.svg", "heart.svg", "horse.svg", "lemon.svg", "marble.svg", "pig.svg", "saturn.svg", "seashell.svg", "skye.svg", "snowflake.svg", "soccer.svg", "starfish.svg", "strawberry.svg", "teddy.svg", "watermelon.svg"]
-console.log(`number of filenames: `, filenames.length)
 
 const description = `Suika Stay Home is a zero-player game and artwork by Billy Rennekamp and Joon Yeon Park.`
 const dr = new DetRan()
@@ -28,6 +27,7 @@ async function init() {
   makeFruit()
   buildWorldEngine()
   resize()
+  prePopulate()
   if (hl.context.previewMode) {
     prePopulate()
     setTimeout(() => {
@@ -228,16 +228,39 @@ function addFruit(index = 0) {
 
 function addBody(x, y, index, inertia = 0) {
   const fruit = fruits[index];
-  let filename
+  let filename, combo, comboIndex
   if (index < 8) {
     filename = `coin_${pics[index]}.png`
   } else {
-    const combo = combos[hl.token.id]
-    const comboIndex = combo[index - 8] + 1
-    filename = `prize_${comboIndex}.png`
+    combo = combos[hl.token.id]
+    comboIndex = combo[index - 8]
+    filename = `prize_${comboIndex + 1}.png`
   }
-
-  const body = Bodies.circle(x, y, fruit.radius, {
+  let shape, dimensions
+  if (index > 7 && filenames[comboIndex].includes('aceofspades')) {
+    shape = 'rectangle'
+    const w = fruit.radius * 2 - 36 * 2
+    const h = fruit.radius * 2
+    dimensions = [w, h]
+  } else if (index > 7 && filenames[comboIndex].includes('coke')) {
+    shape = 'rectangle'
+    const w = fruit.radius * 2 - 56 * 2
+    const h = fruit.radius * 2
+    dimensions = [w, h]
+  } else if (index > 7 && filenames[comboIndex].includes('pig')) {
+    shape = 'rectangle'
+    const w = fruit.radius * 2
+    const h = fruit.radius * 2 - 54 * 2
+    dimensions = [w, h]
+  } else if (index > 7 && (filenames[comboIndex].includes('dice') || filenames[comboIndex].includes('snowflake'))) {
+    console.log('dice')
+    shape = 'polygon'
+    dimensions = [6, fruit.radius]
+  } else {
+    shape = 'circle'
+    dimensions = [fruit.radius]
+  }
+  const body = Bodies[shape](x, y, ...dimensions, {
     index,
     isSleeping,
     density,
@@ -252,7 +275,15 @@ function addBody(x, y, index, inertia = 0) {
       }
     },
   });
+  if (index > 7) {
+    if (filenames[comboIndex].includes('aceofspades')) {
+      Body.rotate(body, Math.PI / 5);
+    } else if (filenames[comboIndex].includes('dice')) {
+      Body.rotate(body, Math.PI / 9);
+    }
+  }
   World.add(world, body);
+
 }
 
 // -----------------
@@ -439,4 +470,4 @@ function shuffle(unshuffled) {
     .map(value => ({ value, sort: dr.random() }))
     .sort((a, b) => a.sort - b.sort)
   return shuffled.map(({ value }) => value)
-}      
+}              
