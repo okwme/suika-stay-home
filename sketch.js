@@ -326,9 +326,7 @@ document.querySelector("canvas").addEventListener("click", () => {
   }
 });
 document.getElementById('mute').addEventListener('click', () => {
-  if (!muted) {
-    mute()
-  }
+  mute()
 })
 document.addEventListener('mousemove', throttle(() => {
   showMuteElement();
