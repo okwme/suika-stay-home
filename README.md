@@ -14,5 +14,5 @@ like a Gashapon that only accepts coins of EU origin.
 スイカゲーム clone on Nintendo Switch
 
 ## Original code
-https://github.com/kairess/suika-game.git
+https://github.com/kairess/suika-game.git  
 https://github.com/paulantoine2/suika
