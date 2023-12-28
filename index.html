@@ -2,18 +2,15 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="base/10_watermelon.png" />
-    <script src="//cdn.jsdelivr.net/npm/poly-decomp@0.3.0/build/decomp.min.js"></script>
+    <link rel="icon" type="image/png" href="/public/fin/coin_1.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <script src="//cdn.jsdelivr.net/npm/pathseg@1.2.1/pathseg.min.js"></script>
-    <script src="/p5.min.js"></script>
-    <title>Suika Stay Home - スイカゲーム</title>
+    <title>Suika Stay Home</title>
     <style>
-      body {
-        text-align: center;
-        /* background-color: lightgrey; */
+      html, body {
+        margin: 0;
+        padding:0;
+        overflow: hidden;
       }
-
       canvas {
         position: absolute;
         top: 0;
@@ -24,60 +21,26 @@
       }
       #mute {
         position: fixed;
-        bottom:0px;
-        left:0px;
+        top:10px;
+        left:10px;
         width: 80px;
         height: 80px;
         z-index:9;
-        background-image: url('mute.svg');
+        background-image: url('public/mute.svg');
         background-repeat: no-repeat;
         background-size: cover;
       }
       #mute[muted] {
-        background-image: url('muted.svg');
+        background-image: url('public/muted.svg');
       }
       .hidden {
         display: none;
       }
-    
-              #video-background {
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                z-index: -1;
-              }
-            </style>
-          </head>
-          <body>
-            <script type="module" src="/main.js"></script>
-            <!-- <script src="/bubbles.js"></script> -->
-            
-            <div id="p5"></div>
-            <div id="bubbles"></div>
-            <div id="suika"></div>
-            <div id="mute"></div>
-            <div id="video-background">
-              <!-- <iframe
-                width="100%"
-                height="100%"
-                src="https://www.youtube.com/embed/5zd6PsWx5E0?autoplay=1&mute=1&controls=0&loop=1&playlist=5zd6PsWx5E0"
-                frameborder="0"
-                allow="autoplay"
-                allowfullscreen></iframe> -->
-            </div>
-            <audio src="/suika.mp3" autoplay loop></audio>
-            <script>
-              const timeArrivedInUnix = Date.now();
-
-          window.addEventListener("unload", (event) => {
-            console.log('unload')
-            const timeSinceArrivedInUnix = Date.now() - timeArrivedInUnix;
-            const prettyTime = new Date(timeSinceArrivedInUnix).toISOString().substr(11, 8);
-            console.log(`You stayed for ${prettyTime}`)
-
-          })
-          </script>
-      </body>
-    </html>
+    </style>
+      <script src="lib/det-rand.js"></script>
+      <script src="lib/hl-gen.js"></script>
+      <script src="lib/matter.js"></script>
+      <script type="module" src="/sketch.js"></script>
+  </head>
+  <body><div id="suika"></div><div id="mute"></div></body>
+</html>

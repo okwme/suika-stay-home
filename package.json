@@ -7,28 +7,16 @@
     "suika-cli": "bin/cli.js"
   },
   "scripts": {
-    "dev": "concurrently \"npm run watch\" \"npm run vite-dev\"",
-    "vite-dev": "vite --open",
+    "dev": "concurrently \"npm run watch\" \"npm run server-dev\"",
+    "server-dev": "npx live-server .",
     "watch": "chokidar 'raw' -c 'npm run gen-img'",
-    "gen-img": "./bin/cli.cjs img",
-    "build": "npm run gen-img && vite build",
-    "preview": "vite preview"
+    "gen-img": "./bin/cli.cjs img"
   },
   "devDependencies": {
     "@img/sharp-darwin-x64": "^0.33.0",
     "chokidar-cli": "^3.0.0",
     "commander": "^11.1.0",
-    "concurrently": "^6.2.2",
-    "sharp": "^0.33.0",
-    "svg2js": "^0.0.4-alpha1",
-    "vite": "^4.4.5",
-    "xml2js": "^0.6.2",
-    "xmldom": "^0.6.0"
+    "sharp": "^0.33.0"
   },
-  "dependencies": {
-    "clone": "^2.1.2",
-    "js-combinatorics": "^2.1.2",
-    "matter-js": "^0.19.0",
-    "poly-decomp": "^0.3.0"
-  }
+  "dependencies": {}
 }

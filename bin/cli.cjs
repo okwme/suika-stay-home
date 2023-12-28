@@ -31,21 +31,26 @@ commander
     fs.rmSync(outputDirectory, { recursive: true });
     fs.mkdirSync(outputDirectory);
     let i = 0;
-    const thumb = ((width - thick * 2) / variety) / 2
+    // const thumb = ((width - thick * 2) / variety) / 2
     for (const file of files) {
       if (file.endsWith('.svg')) {
-        const radius = 2 * (i * radiusStep + radiusOffset);
-        const outputFileName = `${outputDirectory}/${i + 1}.png`;
+        let radius, outputFileName
+        if (i < 8) {
+          radius = 2 * (i * radiusStep + radiusOffset)
+          outputFileName = `${outputDirectory}/coin_${i + 1}.png`;
+        } else {
+          radius = 2 * (9 * radiusStep + radiusOffset)
+          outputFileName = `${outputDirectory}/prize_${i - 7}.png`;
+        }
         try {
           await sharp(`${directory}/${file}`)
             .trim()
             .resize(radius, radius, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
             .png({ background: { alpha: 0 } })
             .toFile(outputFileName)
-
-          await sharp(outputFileName)
-            .resize(thumb, thumb)
-            .toFile(`${outputDirectory}/${i + 1}-thumb.png`)
+          // await sharp(outputFileName)
+          //   .resize(thumb, thumb)
+          //   .toFile(`${outputDirectory}/${i + 1}-thumb.png`)
         } catch (err) {
           console.error(err);
         }
@@ -115,8 +120,8 @@ commander
     // }
 
 
-    // open main.js add a space to the end of the file
-    fs.appendFileSync('main.js', ' ');
+    // open sketch.js add a space to the end of the file
+    fs.appendFileSync('sketch.js', ' ');
   })
 
 const cropSvgToContentOnly = (svgElement) => {
