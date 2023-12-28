@@ -23,18 +23,24 @@
         position: fixed;
         top:10px;
         left:10px;
-        width: 80px;
-        height: 80px;
+        width: 40px;
+        height: 40px;
         z-index:9;
         background-image: url('public/mute.svg');
         background-repeat: no-repeat;
         background-size: cover;
+        cursor: pointer;
       }
       #mute[muted] {
         background-image: url('public/muted.svg');
       }
       .hidden {
         display: none;
+      }
+      .load {
+        visibility: hidden;
+        width: 0;
+        position: absolute;
       }
     </style>
       <script src="lib/det-rand.js"></script>
@@ -43,5 +49,14 @@
       <script src="lib/howler.core.min.js"></script>
       <script type="module" src="sketch.js"></script>
   </head>
-  <body><div id="suika"></div><div muted id="mute"></div></body>
+  <body>
+    <img class="load" src="public/fin/coin_1.png" />
+    <img class="load" src="public/fin/coin_2.png" />
+    <img class="load" src="public/fin/coin_3.png" />
+    <img class="load" src="public/fin/coin_4.png" />
+    <img class="load" src="public/fin/coin_5.png" />
+    <img class="load" src="public/fin/coin_6.png" />
+    <img class="load" src="public/fin/coin_7.png" />
+    <img class="load" src="public/fin/coin_8.png" />
+    <div id="suika"></div><div muted id="mute" class="hidden"></div></body>
 </html>

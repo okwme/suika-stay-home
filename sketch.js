@@ -1,22 +1,16 @@
-
-const variety = 10
-const prizeSize = 27
-const radiusOffset = 40;
-const radiusStep = 10;
-const soundUrl = "public/pop.wav";
-const max = 1000
-const thick = 50
-const dropRate = 200
+const variety = 10, radiusOffset = 40, radiusStep = 10, max = 1000, thick = 50, dropRate = 200
 const maxRadius = radiusStep + radiusOffset
 const bgColor = 'rgba(0,0,0,0)'
-const wallColor = 'rgba(0,0,0,0)'
+const soundUrl = "public/pop.";
 const isSleeping = false, density = 0.01, friction = 0.1, frictionStatic = 0.5, slop = 0.0001, restitution = 0.2
-const Engine = Matter.Engine, Render = Matter.Render, World = Matter.World, Bodies = Matter.Bodies, Events = Matter.Events
+const Engine = Matter.Engine, Render = Matter.Render, World = Matter.World, Bodies = Matter.Bodies, Events = Matter.Events, Body = Matter.Body;
 let timeoutId, render, engine, world, width, height, smallerMultiplyer, isPortrait, sound
-let muted = true, isPaused = false, wasPaused = false
+let muted = true, isPaused = false, wasPaused = false, currentlyPlaying = 0, playLimit = 8
 let fruits = [], pics = [], combos = []
+let filenames = ["aceofspades.svg", "apple.svg", "basketball.svg", "clover.svg", "coke.svg", "dice.svg", "eightball.svg", "fish.svg", "flower1.svg", "flower2.svg", "frog.svg", "golfball.svg", "hamburger.svg", "heart.svg", "horse.svg", "lemon.svg", "marble.svg", "pig.svg", "saturn.svg", "seashell.svg", "skye.svg", "snowflake.svg", "soccer.svg", "starfish.svg", "strawberry.svg", "teddy.svg", "watermelon.svg"]
+console.log(`number of filenames: `, filenames.length)
 
-const description = `Suika Stay Home is...`
+const description = `Suika Stay Home is a zero-player game and artwork by Billy Rennekamp and Joon Yeon Park.`
 const dr = new DetRan()
 
 // -----------------
@@ -27,14 +21,13 @@ init()
 // -----------------
 // functions
 // -----------------
-function init() {
+async function init() {
   resetTimeout();
   loadSound();
-  setDimensions()
   makePics()
   makeFruit()
   buildWorldEngine()
-  makeFrame()
+  resize()
   if (hl.context.previewMode) {
     prePopulate()
     setTimeout(() => {
@@ -57,7 +50,7 @@ function resetTimeout() {
 
 function loadSound() {
   sound = new Howl({
-    src: [soundUrl],
+    src: [soundUrl + 'webm', soundUrl + 'mp3'],
     sprite: {
       0: [1570, 2250],
       1: [2914, 3450],
@@ -68,13 +61,24 @@ function loadSound() {
       6: [9700, 10100]
     },
     volume: 0.3,
+    autoUnlock: true,
+    mobileAutoEnable: true,
+    html5: true,
+    pool: playLimit,
+    onplayerror: function () {
+      if (!muted) {
+        currentlyPlaying--
+      }
+    },
+    onend: function () {
+      if (!muted) {
+        currentlyPlaying--
+      }
+    },
   });
 }
 
-function setDimensions() {
-  width = window.innerWidth
-  height = window.innerHeight
-
+function setDimensions(width = window.innerWidth, height = window.innerHeight) {
   isPortrait = width < height
   let bigger = width > height ? width : height
   let smaller = width < height ? width : height
@@ -91,22 +95,42 @@ function setDimensions() {
     width = bigger
     height = smaller
   }
+  return { width, height }
 }
 
-function makePics() {
+async function makePics() {
   pics = Array.from({ length: variety }, (_, index) => (index + 1).toString());
-
-  for (let i = 0; i < prizeSize; i++) {
-    for (let j = 0; j < prizeSize; j++) {
+  for (let i = 0; i < filenames.length; i++) {
+    for (let j = 0; j < filenames.length; j++) {
       if (j == i) continue
       combos.push([i, j])
     }
   }
   combos = shuffle(combos)
 
+  const comboIndex = hl.token.id
+  const combo = combos[comboIndex];
+  for (let i = 0; i < combo.length; i++) {
+    const prize = combo[i];
+    const filename = `public/fin/prize_${prize + 1}.png`;
+    const image = document.createElement('img');
+    image.src = filename;
+    image.classList.add('load');
+    document.body.appendChild(image);
+  }
+
   hl.token.setName(`Suika #${hl.token.id}`);
   hl.token.setDescription(description)
-
+  hl.token.setTraits({
+    FirstPrize: capitalize(filenames[combo[0]].replace('.svg', '')),
+    SecondPrize: capitalize(filenames[combo[1]].replace('.svg', '')),
+  });
+  console.log(JSON.stringify({
+    tokenId: hl.token.id,
+    name: hl.token.getName(),
+    description: hl.token.getDescription(),
+    traits: hl.token.getTraits()
+  }, null, 2))
 }
 
 function makeFruit() {
@@ -143,24 +167,22 @@ function makeFrame() {
   World.remove(world, bodies);
   const leftWall = Bodies.rectangle(-thick / 2, height / 2, thick, height, {
     isStatic: true,
-    render: { fillStyle: wallColor }
+    render: { fillStyle: bgColor }
   });
   const rightWall = Bodies.rectangle(width + thick / 2, height / 2, thick, height, {
     isStatic: true,
-    render: { fillStyle: wallColor }
+    render: { fillStyle: bgColor }
   });
   const ground = Bodies.rectangle(width / 2, height + thick / 2, width, thick, {
     isStatic: true,
-    render: { fillStyle: wallColor }
+    render: { fillStyle: bgColor }
   });
   World.add(world, [leftWall, rightWall, ground]);
 }
 
 function prePopulate() {
   hideMuteElement();
-  // const arr = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17];
   const arr = Array.from(Array(variety).keys());
-  console.log({ arr }); // [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
   const area = width * height;
   let addedArea = 0;
   let picks = [];
@@ -193,7 +215,7 @@ function prePopulate() {
 
 function run() {
   if (!isPaused) {
-    Engine.update(engine, 1000 / 60); // update the engine
+    Engine.update(engine, 1000 / 60);
   }
   requestAnimationFrame(run);
 }
@@ -210,8 +232,8 @@ function addBody(x, y, index, inertia = 0) {
   if (index < 8) {
     filename = `coin_${pics[index]}.png`
   } else {
-    const combo = combos[hl.token.id - 1]
-    const comboIndex = combo[index - 8]
+    const combo = combos[hl.token.id]
+    const comboIndex = combo[index - 8] + 1
     filename = `prize_${comboIndex}.png`
   }
 
@@ -239,8 +261,12 @@ function addBody(x, y, index, inertia = 0) {
 
 function mute() {
   muted = !muted
-  sound.volume(muted ? 0 : 0.3)
-  document.getElementById('mute').toggleAttribute('muted')
+  if (!muted) {
+    document.getElementById('mute').removeAttribute('muted')
+  } else {
+    document.getElementById('mute').setAttribute('muted', '')
+    currentlyPlaying = 0
+  }
 }
 
 function hideMuteElement() {
@@ -256,10 +282,10 @@ function showMuteElement() {
 function playSound(index) {
   if (muted) return
   index = index % 7
-  const volume = (index + 1) / 10;
-
-  const id = sound.play(index.toString())
-  // Howler.volume(volume, id)
+  if (currentlyPlaying < playLimit) {
+    sound.play(index.toString())
+    currentlyPlaying++
+  }
 
 }
 
@@ -313,8 +339,12 @@ document.addEventListener('mousemove', throttle(() => {
   showMuteElement();
   resetTimeout();
 }, 500));
-window.addEventListener('resize', throttle(() => {
-  setDimensions()
+
+function resize(w = window.innerWidth, h = window.innerHeight) {
+  const results = setDimensions(w, h)
+  const diffX = width - results.width
+  width = results.width
+  height = results.height
   render.bounds.max.x = width;
   render.bounds.max.y = height;
   render.options.width = width;
@@ -322,12 +352,68 @@ window.addEventListener('resize', throttle(() => {
   render.canvas.width = width;
   render.canvas.height = height;
   makeFrame()
-}, 10));
+  let deltaX
+  if (diffX > 0) {
+    deltaX = -1 * Math.abs(diffX) / 2
+  } else {
+    deltaX = Math.abs(diffX) / 2
+  }
+  for (let i = 0; i < world.bodies.length; i++) {
+    const body = world.bodies[i];
+    if (!body.isStatic) {
+      Body.translate(body, { x: deltaX, y: 0 });
+    }
+  }
+}
+const onResize = throttle(async () => {
+  window.removeEventListener('resize', onResize);
+  const diffLimit = 200
+  const diffX = Math.abs(width - window.innerWidth)
+  const diffY = Math.abs(height - window.innerHeight)
+  const diff = diffX > diffY ? diffX : diffY
+  if (diff > diffLimit) {
+    await chunkResize(diff);
+  } else {
+    resize()
+  }
+  setResize()
+}, 10)
+
+async function chunkResize(diff) {
+
+  const maxChunkSize = 4
+  const results = setDimensions()
+  const diffX = width - results.width
+  const diffY = height - results.height
+  const originalWidth = width
+  const originalHeight = height
+  // check total difference between old size and new size
+  // determine how many chunks of tween is needed
+  const chunks = Math.ceil(diff / maxChunkSize)
+  // loop through each chunk
+  // calculate each dimension
+  // set dimension
+  // wait some interval
+  for (let i = 0; i < chunks; i++) {
+    const w = originalWidth - ((diffX / chunks) * i)
+    const h = originalHeight - ((diffY / chunks) * i)
+    resize(w, h)
+    await new Promise(resolve => setTimeout(resolve, 0))
+  }
+}
+function setResize() {
+  window.addEventListener('resize', onResize);
+}
+setResize()
 
 
 // -----------------
 // utils
 // -----------------
+
+function capitalize(word) {
+  return word.charAt(0).toUpperCase() + word.slice(1);
+}
 
 function throttle(func, delay) {
   let timeoutId;
@@ -353,4 +439,4 @@ function shuffle(unshuffled) {
     .map(value => ({ value, sort: dr.random() }))
     .sort((a, b) => a.sort - b.sort)
   return shuffled.map(({ value }) => value)
-}
+}      

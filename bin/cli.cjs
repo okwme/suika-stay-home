@@ -2,9 +2,9 @@
 var commander = require('commander')
 const fs = require('fs')
 const sharp = require('sharp');
-const xml2js = require('xml2js');
-const { SVG, parse } = require('svg2js');
-const { DOMParser } = require('xmldom');
+// const xml2js = require('xml2js');
+// const { SVG, parse } = require('svg2js');
+// const { DOMParser } = require('xmldom');
 
 commander
   .version('0.0.1')
@@ -15,16 +15,14 @@ commander
   .action(async () => {
 
     const directory = 'raw';
-    const shapeDir = 'raw-shapes'
     const outputDirectory = 'public/fin';
-    const outputShapeDirectory = 'public/shapes';
     const radiusOffset = 40;
     const radiusStep = 10;
 
 
-    const variety = 10
-    const thick = 50
-    const width = 1000
+    // const variety = 10
+    // const thick = 50
+    // const width = 1000
 
     const files = fs.readdirSync(directory)
     // Remove existing files in the output directory
@@ -32,6 +30,7 @@ commander
     fs.mkdirSync(outputDirectory);
     let i = 0;
     // const thumb = ((width - thick * 2) / variety) / 2
+    let filenames = []
     for (const file of files) {
       if (file.endsWith('.svg')) {
         let radius, outputFileName
@@ -39,6 +38,7 @@ commander
           radius = 2 * (i * radiusStep + radiusOffset)
           outputFileName = `${outputDirectory}/coin_${i + 1}.png`;
         } else {
+          filenames.push(file)
           radius = 2 * (9 * radiusStep + radiusOffset)
           outputFileName = `${outputDirectory}/prize_${i - 7}.png`;
         }
@@ -58,19 +58,22 @@ commander
       }
     }
 
+    // Save filenames as JSON
+    fs.writeFileSync('public/filenames.json', JSON.stringify(filenames));
 
-    const shapeFiles = fs.readdirSync(shapeDir)
-    fs.rmSync(outputShapeDirectory, { recursive: true });
-    fs.mkdirSync(outputShapeDirectory);
 
-    i = 0;
-    for (const file of shapeFiles) {
-      const sourceFilePath = `${shapeDir}/${file}`;
-      const destinationFilePath = `${outputShapeDirectory}/${i + 1}.svg`;
+    // const shapeFiles = fs.readdirSync(shapeDir)
+    // fs.rmSync(outputShapeDirectory, { recursive: true });
+    // fs.mkdirSync(outputShapeDirectory);
 
-      fs.copyFileSync(sourceFilePath, destinationFilePath)
-      i++;
-    }
+    // i = 0;
+    // for (const file of shapeFiles) {
+    //   const sourceFilePath = `${shapeDir}/${file}`;
+    //   const destinationFilePath = `${outputShapeDirectory}/${i + 1}.svg`;
+
+    //   fs.copyFileSync(sourceFilePath, destinationFilePath)
+    //   i++;
+    // }
 
     //   const radius = 2 * (i * radiusStep + radiusOffset);
     //   const outputFileName = `${outputShapeDirectory}/${i + 1}.svg`;
@@ -119,21 +122,20 @@ commander
     //   i++;
     // }
 
-
     // open sketch.js add a space to the end of the file
     fs.appendFileSync('sketch.js', ' ');
   })
 
-const cropSvgToContentOnly = (svgElement) => {
-  const {
-    x,
-    y,
-    width,
-    height,
-  } = svgElement.getBBox();
-  const viewBoxValue = [x, y, width, height].join(' ');
-  svgElement.setAttribute('viewBox', viewBoxValue);
-};
+// const cropSvgToContentOnly = (svgElement) => {
+//   const {
+//     x,
+//     y,
+//     width,
+//     height,
+//   } = svgElement.getBBox();
+//   const viewBoxValue = [x, y, width, height].join(' ');
+//   svgElement.setAttribute('viewBox', viewBoxValue);
+// };
 
 
 if (process.argv === 0) {
