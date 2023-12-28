@@ -357,7 +357,7 @@ document.addEventListener('visibilitychange', () => {
     }
   }
 });
-document.querySelector("canvas").addEventListener("click", () => {
+document.querySelector("canvas").addEventListener("pointerdown", () => {
   if (muted) {
     mute()
   }

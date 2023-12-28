@@ -1,0 +1,13 @@
+{
+  "name": "Suika Stay Home",
+  "short_name": "Suika",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#000",
+  "description": "Zero player game and artwork by Billy Rennekamp and Joon Yeon Park.",
+  "icons": [{
+    "src": "fin/coin_1.png",
+    "sizes": "48x48",
+    "type": "image/png"
+  }]
+}
