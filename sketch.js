@@ -7,11 +7,11 @@ const Engine = Matter.Engine, Render = Matter.Render, World = Matter.World, Bodi
 let timeoutId, render, engine, world, width, height, smallerMultiplyer, isPortrait, sound
 let muted = true, isPaused = false, wasPaused = false, currentlyPlaying = 0, playLimit = 5
 let fruits = [], pics = [], combos = []
-let filenames = ["aceofspades.svg", "apple.svg", "basketball.svg", "clover.svg", "coke.svg", "dice.svg", "eightball.svg", "fish.svg", "flower1.svg", "flower2.svg", "frog.svg", "golfball.svg", "hamburger.svg", "heart.svg", "horse.svg", "lemon.svg", "marble.svg", "pig.svg", "saturn.svg", "seashell.svg", "skye.svg", "snowflake.svg", "soccer.svg", "starfish.svg", "strawberry.svg", "teddy.svg", "watermelon.svg"]
+let filenames = ["aceofspades.svg", "apple.svg", "basketball.svg", "clover.svg", "coke.svg", "dice.svg", "eightball.svg", "fish.svg", "flower1.svg", "flower2.svg", "frog.svg", "golfball.svg", "hamburger.svg", "horse.svg", "horseshoe.svg", "lemon.svg", "marble.svg", "pig.svg", "puzzle.svg", "saturn.svg", "seashell.svg", "skye.svg", "snowflake.svg", "soccer.svg", "strawberry.svg", "teddy.svg", "watermelon.svg"]
 
 const description = `Suika Stay Home is a zero-player game and artwork by Billy Rennekamp and Joon Yeon Park.`
 const dr = new DetRan()
-
+let previewMode = false
 // -----------------
 // start
 // -----------------
@@ -27,15 +27,25 @@ async function init() {
   makeFruit()
   buildWorldEngine()
   resize()
-
-  if (window.location.href.includes('preview')) {
+  if (window.location.href.includes('preview') || hl.context.previewMode) {
+    previewMode = true
     prePopulate()
   }
+
+  if (window.location.href.includes('preview')) {
+    setTimeout(() => {
+      const canvas = document.getElementsByTagName('canvas')[0];
+      const image = new Image();
+      image.src = canvas.toDataURL();
+      image.classList.add('preview');
+      document.body.appendChild(image);
+    }, 3000)
+  }
   if (hl.context.previewMode) {
-    prePopulate()
     setTimeout(() => {
       hl.token.capturePreview()
-    }, 5000)
+    }, 3000)
+
   }
   run()
   addFruit()
@@ -110,8 +120,10 @@ async function makePics() {
     }
   }
   combos = shuffle(combos)
-
-  const comboIndex = hl.token.id
+  // console.log({ combos: combos.map(combo => combo.map(index => filenames[index])) })
+  const name = `Suika #${hl.token.id}`
+  console.log({ name })
+  const comboIndex = (hl.token.id - 1) % combos.length;
   const combo = combos[comboIndex];
   for (let i = 0; i < combo.length; i++) {
     const prize = combo[i];
@@ -122,7 +134,7 @@ async function makePics() {
     document.body.appendChild(image);
   }
 
-  hl.token.setName(`Suika #${hl.token.id}`);
+  hl.token.setName(name);
   hl.token.setDescription(description)
   hl.token.setTraits({
     FirstPrize: capitalize(filenames[combo[0]].replace('.svg', '')),
@@ -185,12 +197,12 @@ function makeFrame() {
 
 function prePopulate() {
   hideMuteElement();
-  const arr = Array.from(Array(variety).keys());
+  const arr = []//Array.from(Array(variety).keys());
   const area = width * height;
   let addedArea = 0;
   let picks = [];
   let special = 0;
-  for (let i = 0; i < 8; i++) {
+  for (let i = 0; i < 7; i++) {
     let count = 5 - Math.floor(i / 2);
     if (i > 5) {
       count = 3 - Math.floor((i - 6) / 2);
@@ -235,7 +247,7 @@ function addBody(x, y, index, inertia = 0) {
   if (index < 8) {
     filename = `coin_${pics[index]}.png`
   } else {
-    combo = combos[hl.token.id]
+    combo = combos[(hl.token.id - 1) % combos.length]
     comboIndex = combo[index - 8]
     filename = `prize_${comboIndex + 1}.png`
   }
@@ -243,6 +255,14 @@ function addBody(x, y, index, inertia = 0) {
   if (index > 7 && filenames[comboIndex].includes('aceofspades')) {
     shape = 'rectangle'
     const w = fruit.radius * 2 - 36 * 2
+    const h = fruit.radius * 2
+    dimensions = [w, h]
+  } else if (index > 7 && (
+    filenames[comboIndex].includes('puzzle')
+    || filenames[comboIndex].includes('saturn')
+  )) {
+    shape = 'rectangle'
+    const w = fruit.radius * 2
     const h = fruit.radius * 2
     dimensions = [w, h]
   } else if (index > 7 && filenames[comboIndex].includes('coke')) {
@@ -255,10 +275,22 @@ function addBody(x, y, index, inertia = 0) {
     const w = fruit.radius * 2
     const h = fruit.radius * 2 - 54 * 2
     dimensions = [w, h]
+  } else if (index > 7 && filenames[comboIndex].includes('burger')) {
+    shape = 'rectangle'
+    const w = fruit.radius * 2
+    const h = fruit.radius * 2 - 17 * 2
+    dimensions = [w, h]
+  } else if (index > 7 && filenames[comboIndex].includes('strawberry')) {
+    shape = 'rectangle'
+    const w = fruit.radius * 2 - 41 * 2
+    const h = fruit.radius * 2
+    dimensions = [w, h]
   } else if (index > 7 && (filenames[comboIndex].includes('dice') || filenames[comboIndex].includes('snowflake'))) {
-    console.log('dice')
     shape = 'polygon'
     dimensions = [6, fruit.radius]
+  } else if (index > 7 && (filenames[comboIndex].includes('star'))) {
+    shape = 'polygon'
+    dimensions = [5, fruit.radius]
   } else {
     shape = 'circle'
     dimensions = [fruit.radius]
@@ -337,6 +369,10 @@ Events.on(engine, "collisionStart", (event) => {
       collidedIds.push(bodyA.id)
       collidedIds.push(bodyB.id)
       const index = bodyA.index;
+      if (index > 7 && previewMode) {
+        World.remove(world, [bodyA], true);
+        continue
+      }
       World.remove(world, [bodyA, bodyB], true);
       playSound(index);
       if (index !== fruits.length - 1) {
@@ -473,4 +509,4 @@ function shuffle(unshuffled) {
     .map(value => ({ value, sort: dr.random() }))
     .sort((a, b) => a.sort - b.sort)
   return shuffled.map(({ value }) => value)
-}              
+}                
